@@ -3,7 +3,7 @@
 /// <summary>
 /// // Calabonga: update summary (2023-01-02 11:53 IMongoDbSettings)
 /// </summary>
-public class MongoDbSettings : IMongoDbSettings
+public class DatabaseSettings : IDatabaseSettings
 {
     public string MongoDbDatabaseName { get; set; }
 

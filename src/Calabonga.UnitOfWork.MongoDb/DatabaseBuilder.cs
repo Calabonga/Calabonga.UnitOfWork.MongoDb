@@ -6,15 +6,15 @@ using MongoDB.Driver.Core.Events;
 namespace Calabonga.UnitOfWork.MongoDb;
 
 /// <summary>
-/// // Calabonga: update summary (2023-01-02 11:54 IMongoDbBuilder)
+/// Database configuration builder
 /// </summary>
 public class DatabaseBuilder : IDatabaseBuilder
 {
     private readonly ILogger<DatabaseBuilder> _logger;
 
-    public DatabaseBuilder(IMongoDbSettings mongoDbSettings, ICollectionNameSelector collectionNameSelector, ILogger<DatabaseBuilder> logger)
+    public DatabaseBuilder(IDatabaseSettings databaseSettings, ICollectionNameSelector collectionNameSelector, ILogger<DatabaseBuilder> logger)
     {
-        Settings = mongoDbSettings;
+        Settings = databaseSettings;
         CollectionNameSelector = collectionNameSelector;
         _logger = logger;
     }
@@ -27,10 +27,20 @@ public class DatabaseBuilder : IDatabaseBuilder
         return Client.GetDatabase(Settings.MongoDbDatabaseName);
     }
 
+    /// <summary>
+    /// MongoClient
+    /// </summary>
     public IMongoClient Client { get; private set; }
 
-    public IMongoDbSettings Settings { get; }
+    /// <summary>
+    /// MongoDb database settings
+    /// </summary>
+    public IDatabaseSettings Settings { get; }
 
+    /// <summary>
+    /// Build MongoDb client base on <see cref="IDatabaseSettings"/>
+    /// </summary>
+    /// <returns></returns>
     private MongoClient BuildMongoClient()
     {
         var mongoClientSettings = new MongoClientSettings

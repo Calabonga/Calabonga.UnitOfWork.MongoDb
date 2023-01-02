@@ -18,7 +18,7 @@ services.Configure<AppSettings>(x => { configuration.GetSection(nameof(AppSettin
 //services.AddUnitOfWork(config =>
 //{
 //    config.MongoDbUserName = "sa";
-//    config.MongoDbPassword = "8jkGh47hnDw89Haq8LN2";
+//    config.MongoDbPassword = "password";
 //    config.MongoDbDatabaseName = "MyDatabase";
 //    config.MongoDbHosts = new[] { "Localhost" };
 //    config.MongoDbPort = 27017;
@@ -27,7 +27,7 @@ services.Configure<AppSettings>(x => { configuration.GetSection(nameof(AppSettin
 
 services.AddScoped<ICollectionNameSelector, CustomNameSelector>();
 
-services.AddUnitOfWork(configuration.GetSection(nameof(MongoDbSettings)));
+services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
 
 #endregion
 

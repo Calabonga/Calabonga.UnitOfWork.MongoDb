@@ -14,16 +14,16 @@ namespace Calabonga.UnitOfWork.MongoDb
         ///// <remarks>
         ///// This method only support one db context, if been called more than once, will throw exception.
         ///// </remarks>
-        public static void AddUnitOfWork(this IServiceCollection services, Action<MongoDbSettings> applyConfiguration)
+        public static void AddUnitOfWork(this IServiceCollection services, Action<DatabaseSettings> applyConfiguration)
         {
             services.TryAddScoped<IUnitOfWork, UnitOfWork>();
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
             services.TryAddScoped<ICollectionNameSelector, CollectionNameSelector>();
 
-            var mongoDbSettings = new MongoDbSettings();
+            var mongoDbSettings = new DatabaseSettings();
             applyConfiguration(mongoDbSettings);
 
-            services.TryAddScoped<IMongoDbSettings>(_ => mongoDbSettings);
+            services.TryAddScoped<IDatabaseSettings>(_ => mongoDbSettings);
         }
 
         ///// <summary>
@@ -40,14 +40,14 @@ namespace Calabonga.UnitOfWork.MongoDb
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
             services.TryAddScoped<ICollectionNameSelector, CollectionNameSelector>();
 
-            var mongoDbSettings = configurationSection.Get<MongoDbSettings>();
+            var mongoDbSettings = configurationSection.Get<DatabaseSettings>();
 
             if (mongoDbSettings == null)
             {
-                throw new ArgumentNullException(nameof(MongoDbSettings));
+                throw new ArgumentNullException(nameof(DatabaseSettings));
             }
 
-            services.TryAddScoped<IMongoDbSettings>(_ => mongoDbSettings);
+            services.TryAddScoped<IDatabaseSettings>(_ => mongoDbSettings);
         }
     }
 }

@@ -1,9 +1,9 @@
 ﻿namespace Calabonga.UnitOfWork.MongoDb;
 
 /// <summary>
-/// // Calabonga: update summary (2023-01-02 11:53 IMongoDbSettings)
+/// MongoDb settings for connection
 /// </summary>
-public interface IMongoDbSettings
+public interface IDatabaseSettings
 {
     string MongoDbDatabaseName { get; }
 
