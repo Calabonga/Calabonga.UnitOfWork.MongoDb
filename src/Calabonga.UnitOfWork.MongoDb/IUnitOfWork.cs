@@ -4,7 +4,7 @@ namespace Calabonga.UnitOfWork.MongoDb;
 
 public interface IUnitOfWork : IDisposable
 {
-    IRepository<TDocument> GetRepository<TDocument>() where TDocument : IDocument;
+    IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>;
 
     /// <summary>
     /// Last error after SaveChanges operation executed

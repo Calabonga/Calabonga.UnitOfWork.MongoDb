@@ -5,7 +5,7 @@ namespace Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 
 public static class DocumentHelper
 {
-    public static async Task CreateDocuments(IClientSessionHandle session, IRepository<Document> repository, ILogger logger, CancellationToken cancellationToken)
+    public static async Task CreateDocuments(IClientSessionHandle session, IRepository<Document, int> repository, ILogger logger, CancellationToken cancellationToken)
     {
         var documents = GenerateDocuments(0, 100).ToList();
 
@@ -33,7 +33,7 @@ public static class DocumentHelper
             Title = $"Title {x}"
         });
 
-    public static async Task PrintDocuments(int pageSize, bool showItems, IRepository<Document> repository, ILogger logger, CancellationToken cancellationToken)
+    public static async Task PrintDocuments(int pageSize, bool showItems, IRepository<Document, int> repository, ILogger logger, CancellationToken cancellationToken)
     {
         var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<Document>.Empty, cancellationToken: cancellationToken);
 
@@ -54,7 +54,7 @@ public static class DocumentHelper
 
     }
 
-    public static async Task DeleteDocuments(IRepository<Document> repository, ILogger logger, CancellationToken cancellationToken)
+    public static async Task DeleteDocuments(IRepository<Document, int> repository, ILogger logger, CancellationToken cancellationToken)
     {
         var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<Document>.Empty, cancellationToken: cancellationToken);
         logger.LogInformation("Deleting all {Total}!", total);

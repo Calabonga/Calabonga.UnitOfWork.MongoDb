@@ -1,9 +1,7 @@
 ﻿namespace Calabonga.UnitOfWork.MongoDb.ConsoleApp
 {
-    public class Document : IDocument
+    public class Document : DocumentBase<int>
     {
-        public int Id { get; set; }
-
         public string Title { get; set; } = default!;
 
         public string? Description { get; set; }

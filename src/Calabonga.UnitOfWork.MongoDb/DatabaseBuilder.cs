@@ -24,7 +24,7 @@ public class DatabaseBuilder : IDatabaseBuilder
     public IMongoDatabase Build()
     {
         Client = BuildMongoClient();
-        return Client.GetDatabase(Settings.MongoDbDatabaseName);
+        return Client.GetDatabase(Settings.DatabaseName);
     }
 
     /// <summary>

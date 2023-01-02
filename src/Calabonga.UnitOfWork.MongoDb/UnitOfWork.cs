@@ -18,16 +18,16 @@ public sealed class UnitOfWork : IUnitOfWork
         LastSaveChangesResult = new SaveChangesResult();
     }
 
-    public IRepository<TEntity> GetRepository<TEntity>() where TEntity : IDocument
+    public IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>
     {
         _repositories ??= new Dictionary<Type, object>();
-        var type = typeof(TEntity);
+        var type = typeof(TDocument);
         if (!_repositories.ContainsKey(type))
         {
-            _repositories[type] = new Repository<TEntity>(_databaseBuilder);
+            _repositories[type] = new Repository<TDocument, TType>(_databaseBuilder);
         }
 
-        return (IRepository<TEntity>)_repositories[type];
+        return (IRepository<TDocument, TType>)_repositories[type];
     }
 
     public SaveChangesResult LastSaveChangesResult { get; }

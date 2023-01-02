@@ -7,7 +7,8 @@ namespace Calabonga.UnitOfWork.MongoDb;
 /// Defines the interfaces for generic repository.
 /// </summary>
 /// <typeparam name="TDocument">The type of the entity.</typeparam>
-public interface IRepository<TDocument> where TDocument : IDocument
+/// <typeparam name="TType"></typeparam>
+public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TType>
 {
     #region MongoDb base
 

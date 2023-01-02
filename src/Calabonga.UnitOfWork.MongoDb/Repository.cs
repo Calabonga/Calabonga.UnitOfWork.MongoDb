@@ -4,8 +4,8 @@ using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb;
 
-public sealed class Repository<TDocument> : IRepository<TDocument>
-    where TDocument : IDocument
+public sealed class Repository<TDocument, TType> : IRepository<TDocument, TType>
+    where TDocument : DocumentBase<TType>
 {
     private readonly string _entityName;
     private readonly ICollectionNameSelector _collectionNameSelector;

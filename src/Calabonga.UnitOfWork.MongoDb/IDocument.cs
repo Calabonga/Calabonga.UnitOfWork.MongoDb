@@ -1,6 +1,11 @@
 ﻿namespace Calabonga.UnitOfWork.MongoDb;
 
-public interface IDocument
+public interface IDocument<TType>
 {
-    int Id { get; set; }
+    TType Id { get; set; }
+}
+
+public abstract class DocumentBase<TType> : IDocument<TType>
+{
+    public TType Id { get; set; }
 }

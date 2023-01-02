@@ -5,7 +5,7 @@
 /// </summary>
 public class DatabaseSettings : IDatabaseSettings
 {
-    public string MongoDbDatabaseName { get; set; }
+    public string DatabaseName { get; set; }
 
     public string? MongoDbUserName { get; set; }
 

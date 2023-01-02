@@ -40,7 +40,7 @@ var cancellationTokenSource = new CancellationTokenSource();
 var logger = container.GetRequiredService<ILogger<Program>>();
 
 var unitOfWork = container.GetService<IUnitOfWork>();
-var repository = unitOfWork!.GetRepository<Document>();
+var repository = unitOfWork!.GetRepository<Document, int>();
 
 logger.LogInformation("{Name}", repository.Collection.CollectionNamespace);
 

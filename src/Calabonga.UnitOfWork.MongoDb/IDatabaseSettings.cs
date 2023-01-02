@@ -5,7 +5,7 @@
 /// </summary>
 public interface IDatabaseSettings
 {
-    string MongoDbDatabaseName { get; }
+    string DatabaseName { get; }
 
     string MongoDbUserName { get; }
 
