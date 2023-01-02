@@ -24,7 +24,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageIconUrl>https://www.calabonga.net/images/logo.png</PackageIconUrl>
 		<PackageIcon>logo.png</PackageIcon>
-		<PackageReadmeFile>readme.md</PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/Calabonga/Calabonga.UnitOfWork.MongoDb</RepositoryUrl>
 		<IncludeSymbols>False</IncludeSymbols>
@@ -36,11 +36,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="logo.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
 		<None Include="..\..\README.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
+		</None>
+		<None Include="logo.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
