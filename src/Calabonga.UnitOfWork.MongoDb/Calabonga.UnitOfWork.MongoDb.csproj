@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<AssemblyName>Calabonga.UnitOfWork.MongoDb</AssemblyName>
+		<RootNamespace>Calabonga.UnitOfWork.MongoDb</RootNamespace>
+		<Version>1.0.0-beta2</Version>
+		<ApplicationIcon>favicon.ico</ApplicationIcon>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>Calabonga</Authors>
+		<Company>Calabonga SOFT</Company>
+		<Copyright>Calabonga © 2023</Copyright>
+		<Description>Unit of Work implementation for MongoDb</Description>
+		<PackageProjectUrl>https://www.calabonga.net/</PackageProjectUrl>
+		<PackageTags>calabonga pattern unitofwork mongodb repository</PackageTags>
+		<PackageReleaseNotes>First release (beta)</PackageReleaseNotes>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>Calabonga.UnitOfWork.MongoDb</PackageId>
+		<Product>Calabonga.UnitOfWork.MongoDb</Product>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageIconUrl>https://www.calabonga.net/images/logo.png</PackageIconUrl>
+		<PackageIcon>logo.png</PackageIcon>
+		<PackageReadmeFile>readme.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/Calabonga/Calabonga.UnitOfWork.MongoDb</RepositoryUrl>
+		<IncludeSymbols>False</IncludeSymbols>
+		<Title>Calabonga.UnitOfWork.MongoDb</Title>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="favicon.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="logo.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
+		<PackageReference Include="MongoDB.Driver" Version="2.18.0" />
+	</ItemGroup>
+
+</Project>
