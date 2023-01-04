@@ -44,7 +44,7 @@ public class DatabaseBuilder : IDatabaseBuilder
     /// <returns></returns>
     private MongoClient GetMongoClient()
     {
-        if (string.IsNullOrEmpty(Settings.ConnectionString))
+        if (!string.IsNullOrEmpty(Settings.ConnectionString))
         {
             return new MongoClient(Settings.ConnectionString);
         }
@@ -80,7 +80,6 @@ public class DatabaseBuilder : IDatabaseBuilder
         }
 
         mongoClientSettings.UseTls = false;
-
 
         // return new MongoClient("mongodb://localhost:27017/?readPreference=primary&ssl=false&directConnection=true");
         return new MongoClient(mongoClientSettings);

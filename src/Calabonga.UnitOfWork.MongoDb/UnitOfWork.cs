@@ -32,9 +32,25 @@ public sealed class UnitOfWork : IUnitOfWork
         return (IRepository<TDocument, TType>)_repositories[type];
     }
 
-    public void EnsureReplicationSetReady() => _databaseBuilder.Client.EnsureReplicationSetReady();
+    public void EnsureReplicationSetReady()
+    {
+        if (_databaseBuilder.Client == null)
+        {
+            _databaseBuilder.Build();
+        }
 
-    public IClientSessionHandle GetSession() => _databaseBuilder.Client.StartSession();
+        _databaseBuilder.Client!.EnsureReplicationSetReady();
+    }
+
+    public IClientSessionHandle GetSession()
+    {
+        if (_databaseBuilder.Client == null)
+        {
+            _databaseBuilder.Build();
+        }
+        return _databaseBuilder.Client!.StartSession();
+    }
+
     public Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken) => _databaseBuilder.Client.StartSessionAsync(null, cancellationToken);
 
     public async Task UseTransactionAsync(Action<IClientSessionHandle, CancellationToken> processOperationWithTransaction, CancellationToken cancellationToken, IClientSessionHandle? session, TransactionOptions? transactionOptions = null)

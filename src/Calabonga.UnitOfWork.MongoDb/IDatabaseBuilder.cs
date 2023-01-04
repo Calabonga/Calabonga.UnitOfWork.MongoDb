@@ -11,7 +11,7 @@ public interface IDatabaseBuilder
 
     IMongoDatabase Build();
 
-    IMongoClient Client { get; }
+    IMongoClient? Client { get; }
 
     IDatabaseSettings Settings { get; }
 }

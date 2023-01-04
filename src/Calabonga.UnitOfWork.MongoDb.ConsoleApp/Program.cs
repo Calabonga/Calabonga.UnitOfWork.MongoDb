@@ -47,7 +47,7 @@ try
 #if DEBUG
 
     // Ensure Replication Set enabled
-    //unitOfWork.EnsureReplicationSetReady();
+    unitOfWork.EnsureReplicationSetReady();
 
 #endif
 
