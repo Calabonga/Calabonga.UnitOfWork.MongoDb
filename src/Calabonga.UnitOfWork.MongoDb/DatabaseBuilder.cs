@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Events;
+using System.Reflection;
 
 namespace Calabonga.UnitOfWork.MongoDb;
 
@@ -23,7 +24,7 @@ public class DatabaseBuilder : IDatabaseBuilder
 
     public IMongoDatabase Build()
     {
-        Client = BuildMongoClient();
+        Client = GetMongoClient();
         return Client.GetDatabase(Settings.DatabaseName);
     }
 
@@ -41,21 +42,33 @@ public class DatabaseBuilder : IDatabaseBuilder
     /// Build MongoDb client base on <see cref="IDatabaseSettings"/>
     /// </summary>
     /// <returns></returns>
-    private MongoClient BuildMongoClient()
+    private MongoClient GetMongoClient()
     {
+        if (string.IsNullOrEmpty(Settings.ConnectionString))
+        {
+            return new MongoClient(Settings.ConnectionString);
+        }
+
         var mongoClientSettings = new MongoClientSettings
         {
             Servers = Settings.MongoDbHosts.Select(x => new MongoServerAddress(x, Settings.MongoDbPort)).ToArray(),
+            ApplicationName = Assembly.GetExecutingAssembly().FullName ?? Settings.ApplicationName
         };
 
-        if (!string.IsNullOrEmpty(Settings.MongoDbUserName))
+
+        if (!string.IsNullOrEmpty(Settings.Credential?.MongoDbUserName))
         {
-            mongoClientSettings.Credential = MongoCredential.CreateCredential(null, Settings.MongoDbUserName, Settings.MongoDbPassword);
+            mongoClientSettings.Credential = MongoCredential.CreateCredential(Settings.DatabaseName, Settings.Credential.MongoDbUserName, Settings.Credential.MongoDbPassword);
         }
 
         if (!string.IsNullOrWhiteSpace(Settings.MongoDbReplicaSetName))
         {
             mongoClientSettings.ReplicaSetName = Settings.MongoDbReplicaSetName;
+        }
+
+        if (Settings.DirectConnection)
+        {
+            mongoClientSettings.DirectConnection = true;
         }
 
         if (Settings.MongoDbVerboseLogging)
@@ -66,6 +79,10 @@ public class DatabaseBuilder : IDatabaseBuilder
             };
         }
 
+        mongoClientSettings.UseTls = false;
+
+
+        // return new MongoClient("mongodb://localhost:27017/?readPreference=primary&ssl=false&directConnection=true");
         return new MongoClient(mongoClientSettings);
     }
 }

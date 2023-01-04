@@ -5,17 +5,24 @@
 /// </summary>
 public interface IDatabaseSettings
 {
-    string DatabaseName { get; }
+    /// <summary>
+    /// Overrides all others settings. Just returns new MongoClient with this connection string
+    /// </summary>
+    string? ConnectionString { get; set; }
 
-    string MongoDbUserName { get; }
+    string DatabaseName { get; }
 
     string[] MongoDbHosts { get; }
 
     string MongoDbReplicaSetName { get; }
 
-    string MongoDbPassword { get; }
-
     int MongoDbPort { get; }
 
     bool MongoDbVerboseLogging { get; }
+
+    string ApplicationName { get; }
+
+    bool DirectConnection { get; }
+
+    CredentialSettings? Credential { get; }
 }

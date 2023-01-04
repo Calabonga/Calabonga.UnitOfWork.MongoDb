@@ -7,5 +7,5 @@ public interface IDocument<TType>
 
 public abstract class DocumentBase<TType> : IDocument<TType>
 {
-    public TType Id { get; set; }
+    public TType Id { get; set; } = default!;
 }
