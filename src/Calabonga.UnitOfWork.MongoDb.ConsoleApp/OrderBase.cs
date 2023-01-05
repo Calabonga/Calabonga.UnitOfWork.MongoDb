@@ -1,11 +1,9 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System.ComponentModel.DataAnnotations;
 
 namespace Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 
 [BsonIgnoreExtraElements]
-[MetadataType(typeof(DocumentBaseMetadata<int>))]
 [BsonDiscriminator(RootClass = true)]
 [BsonKnownTypes(typeof(OrderInternal), typeof(OrderExternal))]
 public abstract class OrderBase : DocumentBase<int>
@@ -38,10 +36,4 @@ public class OrderInternal : OrderBase
 public class OrderExternal : OrderBase
 {
     protected override OrderType OrderType => OrderType.External;
-}
-
-public class DocumentBaseMetadata<TType>
-{
-    [BsonId]
-    public TType Id { get; set; } = default!;
 }

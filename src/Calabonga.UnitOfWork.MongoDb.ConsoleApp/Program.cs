@@ -23,11 +23,11 @@ services.AddUnitOfWork(config =>
     config.MongoDbPort = 27017;
     config.DirectConnection = true;
     config.ApplicationName = "Demo";
-    config.VerboseLogging = true;
+    config.VerboseLogging = false;
     config.UseTls = false;
 });
 
-// services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
+//services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
 
 #endregion
 
