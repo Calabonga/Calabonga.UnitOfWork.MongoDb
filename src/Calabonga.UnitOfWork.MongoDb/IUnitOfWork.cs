@@ -26,7 +26,7 @@ public interface IUnitOfWork : IDisposable
     /// // Calabonga: update summary (2023-01-04 04:22 IUnitOfWork)
     /// </summary>
     /// <param name="cancellationToken"></param>
-    Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken);
+    Task<IClientSessionHandle>? GetSessionAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// // Calabonga: update summary (2023-01-04 04:22 IUnitOfWork)

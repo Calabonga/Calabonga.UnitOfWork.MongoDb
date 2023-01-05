@@ -15,19 +15,22 @@ services.AddLogging(x => x.AddSerilog(loggerConfiguration));
 
 #region Configure
 
-services.AddUnitOfWork(config =>
-{
-    config.Credential = new CredentialSettings { Login = "mongo", Password = "mongo", Mechanism = "SCRAM-SHA-1" };
-    config.DatabaseName = "MyDatabase";
-    config.Hosts = new[] { "localhost" };
-    config.MongoDbPort = 27017;
-    config.DirectConnection = true;
-    config.ApplicationName = "Demo";
-    config.VerboseLogging = false;
-    config.UseTls = false;
-});
+//services.AddUnitOfWork(config =>
+//{
+//    //config.Credential = new CredentialSettings { Login = "mongo", Password = "mongo", Mechanism = "SCRAM-SHA-1" };
+//    config.DatabaseName = "MyDatabase";
+//    config.Hosts = new[] { "localhost" };
+//    config.MongoDbPort = 27017;
+//    config.DirectConnection = true;
+//    config.ReplicaSetName = "rs0";
+//    config.ApplicationName = "Demo";
+//    config.VerboseLogging = false;
+//    config.UseTls = false;
+//});
 
-//services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
+services.AddScoped<ICollectionNameSelector, MyCollectionNameSelector>();
+
+services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
 
 #endregion
 
@@ -47,16 +50,14 @@ try
 #if DEBUG
 
     // Ensure Replication Set enabled
-    //unitOfWork.EnsureReplicationSetReady();
+    // unitOfWork.EnsureReplicationSetReady();
 
 #endif
 
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
-    await DocumentHelper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
-    await DocumentHelper.PrintDocuments(300, true, repository, logger, cancellationTokenSource.Token);
-    await DocumentHelper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
+    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync, cancellationTokenSource.Token, session);
 
     logger.LogInformation("Done");
 
@@ -69,28 +70,47 @@ catch (Exception exception)
 
 #region Transaction
 
-async Task ProcessDataInTransaction(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+async Task ProcessDataInTransactionAsync(
+    IRepository<OrderBase, int> repositoryInTransaction,
+    IClientSessionHandle session,
+    CancellationToken cancellationToken)
 {
-    //await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+    // await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
 
-    var internalOrder1 = DocumentHelper.GetInternal(99);
-    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
-    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+    // var internalOrder1 = DocumentHelper.GetInternal(99);
+    // await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    // logger!.LogInformation("InsertOne: {item1}", internalOrder1);
 
-    var internalOrder2 = DocumentHelper.GetInternal(100);
-    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
-    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+    // var internalOrder2 = DocumentHelper.GetInternal(100);
+    // await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    // logger!.LogInformation("InsertOne: {item2}", internalOrder2);
 
     var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
     var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
-    var result = await repositoryInTransaction.Collection.UpdateOneAsync(filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
+    var result = await repositoryInTransaction.Collection
+    .UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
 
     if (result.IsModifiedCountAvailable)
     {
         logger!.LogInformation("Update {}", result.ModifiedCount);
     }
 
-    throw new InvalidOperationException();
+    //throw new InvalidOperationException();
 }
 
 #endregion
+
+
+public class MyCollectionNameSelector : ICollectionNameSelector
+{
+    public string GetMongoCollectionName(string typeName)
+    {
+        switch (typeName)
+        {
+            case "OrderBase":
+                return "orders";
+        }
+
+        return typeName;
+    }
+}

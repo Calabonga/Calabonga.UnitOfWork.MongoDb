@@ -51,7 +51,8 @@ public sealed class UnitOfWork : IUnitOfWork
         return _databaseBuilder.Client!.StartSession();
     }
 
-    public Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken) => _databaseBuilder.Client.StartSessionAsync(null, cancellationToken);
+    public Task<IClientSessionHandle>? GetSessionAsync(CancellationToken cancellationToken) =>
+        _databaseBuilder.Client?.StartSessionAsync(null, cancellationToken) ?? null;
 
     public async Task UseTransactionAsync(Action<IClientSessionHandle, CancellationToken> processOperationWithTransaction, CancellationToken cancellationToken, IClientSessionHandle? session, TransactionOptions? transactionOptions = null)
     {

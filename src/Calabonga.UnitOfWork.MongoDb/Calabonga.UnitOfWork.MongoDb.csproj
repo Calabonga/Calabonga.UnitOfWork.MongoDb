@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Calabonga.UnitOfWork.MongoDb</AssemblyName>
 		<RootNamespace>Calabonga.UnitOfWork.MongoDb</RootNamespace>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -13,11 +13,11 @@
 		<Company>Calabonga SOFT</Company>
 		<Copyright>Calabonga © 2023</Copyright>
 		<Description>Unit of Work implementation for MongoDb</Description>
-		<PackageProjectUrl>https://www.calabonga.net/</PackageProjectUrl>
+		<PackageProjectUrl>https://www.calabonga.net/blog/post/unit-of-work-for-mongodb</PackageProjectUrl>
 		<PackageTags>calabonga pattern unitofwork mongodb repository</PackageTags>
-		<PackageReleaseNotes>First release (beta)</PackageReleaseNotes>
-		<AssemblyVersion>1.0.0.0</AssemblyVersion>
-		<FileVersion>1.0.0.0</FileVersion>
+		<PackageReleaseNotes>First release</PackageReleaseNotes>
+		<AssemblyVersion>1.0.2.0</AssemblyVersion>
+		<FileVersion>1.0.2.0</FileVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>Calabonga.UnitOfWork.MongoDb</PackageId>
 		<Product>Calabonga.UnitOfWork.MongoDb</Product>
