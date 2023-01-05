@@ -64,4 +64,6 @@ public class CredentialSettings
     public string? Login { get; set; }
 
     public string? Password { get; set; }
+
+    public string? Mechanism { get; set; }
 }

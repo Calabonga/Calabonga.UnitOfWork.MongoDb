@@ -17,16 +17,15 @@ services.AddLogging(x => x.AddSerilog(loggerConfiguration));
 
 services.AddUnitOfWork(config =>
 {
-    config.Credential = new CredentialSettings { Login = "sa", Password = "8jkGh47hnDw89Haq8LN2" };
+    config.Credential = new CredentialSettings { Login = "mongo", Password = "mongo", Mechanism = "SCRAM-SHA-1" };
     config.DatabaseName = "MyDatabase";
-    config.Hosts = new[] { "Localhost" };
+    config.Hosts = new[] { "localhost" };
     config.MongoDbPort = 27017;
     config.DirectConnection = true;
     config.ApplicationName = "Demo";
-    config.VerboseLogging = false;
+    config.VerboseLogging = true;
     config.UseTls = false;
 });
-
 
 // services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
 
@@ -48,7 +47,7 @@ try
 #if DEBUG
 
     // Ensure Replication Set enabled
-    unitOfWork.EnsureReplicationSetReady();
+    //unitOfWork.EnsureReplicationSetReady();
 
 #endif
 
@@ -64,7 +63,7 @@ try
 }
 catch (Exception exception)
 {
-    Console.WriteLine(exception.Message);
+    logger.LogError(exception.Message);
 }
 
 

@@ -58,7 +58,10 @@ public class DatabaseBuilder : IDatabaseBuilder
 
         if (!string.IsNullOrEmpty(Settings.Credential?.Login))
         {
-            mongoClientSettings.Credential = MongoCredential.CreateCredential(Settings.DatabaseName, Settings.Credential.Login, Settings.Credential.Password);
+            var internalIdentity = new MongoInternalIdentity("admin", Settings.Credential.Login);
+            var passwordEvidence = new PasswordEvidence(Settings.Credential.Password);
+            var mongoCredential = new MongoCredential(Settings.Credential.Mechanism, internalIdentity, passwordEvidence);
+            mongoClientSettings.Credential = mongoCredential;
         }
 
         if (!string.IsNullOrWhiteSpace(Settings.ReplicaSetName))
