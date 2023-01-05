@@ -5,8 +5,6 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calabonga.UnitOfWork.MongoDb", "Calabonga.UnitOfWork.MongoDb\Calabonga.UnitOfWork.MongoDb.csproj", "{56331EA4-37B9-4813-B7C9-7C417378CA1D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calabonga.UnitOfWork.MongoDb.ConsoleApp", "Calabonga.UnitOfWork.MongoDb.ConsoleApp\Calabonga.UnitOfWork.MongoDb.ConsoleApp.csproj", "{CB70E024-8A70-4A32-9E29-E88F1571C580}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{FD89CE51-0732-4C64-A389-836A399A3543}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig

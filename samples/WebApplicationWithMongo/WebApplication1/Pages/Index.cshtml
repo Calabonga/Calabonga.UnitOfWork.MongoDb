@@ -1,0 +1,124 @@
+﻿@page "{pageIndex?}/{pageSize?}"
+@model WebApplicationWithMongo.Pages.IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Unit Of Work for MongoDb</h1>
+    <p>Пример использования nuget-пакета Calabonga.UnitOfWork.MongoDb</p>
+</div>
+<div class="row mb-3">
+    <div class="col">
+
+        <div class="btn-group">
+            <form method="post" asp-page-handler="Create">
+                <button type="submit" class="btn btn-outline-primary">Create Random</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    var message = TempData["Message"]!.ToString()!.Split(":");
+    <div class="row mb-3">
+        <div class="col">
+
+            <p class="alert alert-@message[0]">
+                @message[1]
+            </p>
+        </div>
+    </div>
+}
+
+@if (Model.Data?.Items.Any() == true)
+{
+    <div class="row mb-3">
+
+        <div class="col">
+            <p>
+                Total items:
+                <span class="badge bg-secondary">
+                    @Model.Data.TotalCount
+                </span>
+            </p>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Number</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Items Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Data.Items)
+                    {
+                        <tr>
+                            <td class="col">@item.Id</td>
+                            <td class="col">@item.Number</td>
+                            <td class="col">@item.Title</td>
+                            <td class="col">@item.Description</td>
+                            <td class="col">
+                                @if (item.Items?.Count > 0)
+                                {
+                                    <a class="btn btn-link" data-bs-toggle="collapse" href="#data@(item.Id)" role="button" aria-expanded="false" aria-controls="data@(item.Id)">
+                                        Total items: @(item.Items.Count.ToString())<br/>Total price: $@item.Items.Sum(c=>c.Price*c.Quantity)
+                                    </a>
+                                    <div class="collapse" id="data@(item.Id)">
+                                        <ul>
+                                            @foreach (var itemItem in item.Items)
+                                            {
+                                                <li>
+                                                    @itemItem.Name
+                                                    <br />
+                                                    <b>
+                                                        @itemItem.Quantity
+                                                    </b>
+                                                    x
+                                                    <b>
+                                                        @itemItem.Price.ToString("C")
+                                                    </b>
+                                                    =
+                                                    <b>
+                                                        $@(itemItem.Price * itemItem.Quantity)
+                                                    </b>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+                            </td>
+                            <td class="col">
+                                <a class="btn btn-danger btn-sm" href="@Url.Page("Index", "Delete", new {id = item.Id})">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    @if (Model.Data.TotalPages > 0)
+    {
+        <div class="row">
+            <div class="col">
+                <pager class="my-3"
+               asp-paged-list-page-size="@Model.Data.PageSize"
+               asp-paged-list-page-index="@Model.Data.PageIndex"
+               asp-paged-list-total-pages="@Model.Data.TotalCount"
+               asp-paged-list-url="index"
+               asp-route-parameter="pageIndex"></pager>
+            </div>
+        </div>
+    }
+}
+
+
