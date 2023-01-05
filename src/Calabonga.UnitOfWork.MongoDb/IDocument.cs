@@ -1,4 +1,6 @@
-﻿namespace Calabonga.UnitOfWork.MongoDb;
+﻿using MongoDB.Bson.Serialization.Attributes;
+
+namespace Calabonga.UnitOfWork.MongoDb;
 
 public interface IDocument<TType>
 {
@@ -7,5 +9,6 @@ public interface IDocument<TType>
 
 public abstract class DocumentBase<TType> : IDocument<TType>
 {
+    [BsonId]
     public TType Id { get; set; } = default!;
 }

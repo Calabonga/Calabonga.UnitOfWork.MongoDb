@@ -51,19 +51,19 @@ public class DatabaseBuilder : IDatabaseBuilder
 
         var mongoClientSettings = new MongoClientSettings
         {
-            Servers = Settings.MongoDbHosts.Select(x => new MongoServerAddress(x, Settings.MongoDbPort)).ToArray(),
+            Servers = Settings.Hosts.Select(x => new MongoServerAddress(x, Settings.MongoDbPort)).ToArray(),
             ApplicationName = Assembly.GetExecutingAssembly().FullName ?? Settings.ApplicationName
         };
 
 
-        if (!string.IsNullOrEmpty(Settings.Credential?.MongoDbUserName))
+        if (!string.IsNullOrEmpty(Settings.Credential?.Login))
         {
-            mongoClientSettings.Credential = MongoCredential.CreateCredential(Settings.DatabaseName, Settings.Credential.MongoDbUserName, Settings.Credential.MongoDbPassword);
+            mongoClientSettings.Credential = MongoCredential.CreateCredential(Settings.DatabaseName, Settings.Credential.Login, Settings.Credential.Password);
         }
 
-        if (!string.IsNullOrWhiteSpace(Settings.MongoDbReplicaSetName))
+        if (!string.IsNullOrWhiteSpace(Settings.ReplicaSetName))
         {
-            mongoClientSettings.ReplicaSetName = Settings.MongoDbReplicaSetName;
+            mongoClientSettings.ReplicaSetName = Settings.ReplicaSetName;
         }
 
         if (Settings.DirectConnection)
@@ -71,7 +71,7 @@ public class DatabaseBuilder : IDatabaseBuilder
             mongoClientSettings.DirectConnection = true;
         }
 
-        if (Settings.MongoDbVerboseLogging)
+        if (Settings.VerboseLogging)
         {
             mongoClientSettings.ClusterConfigurator = clusterBuilder =>
             {
@@ -79,9 +79,11 @@ public class DatabaseBuilder : IDatabaseBuilder
             };
         }
 
-        mongoClientSettings.UseTls = false;
+        if (Settings.UseTls)
+        {
+            mongoClientSettings.UseTls = true;
+        }
 
-        // return new MongoClient("mongodb://localhost:27017/?readPreference=primary&ssl=false&directConnection=true");
         return new MongoClient(mongoClientSettings);
     }
 }

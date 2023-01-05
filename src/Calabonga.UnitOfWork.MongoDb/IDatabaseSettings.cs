@@ -10,19 +10,48 @@ public interface IDatabaseSettings
     /// </summary>
     string? ConnectionString { get; set; }
 
+    /// <summary>
+    /// Database name
+    /// </summary>
     string DatabaseName { get; }
 
-    string[] MongoDbHosts { get; }
+    /// <summary>
+    /// A set of hosts for MongoDb
+    /// </summary>
+    string[] Hosts { get; }
 
-    string MongoDbReplicaSetName { get; }
+    /// <summary>
+    /// Replica Set Name
+    /// </summary>
+    string ReplicaSetName { get; }
 
+    /// <summary>
+    /// MongoDb port. Default is 27017
+    /// </summary>
     int MongoDbPort { get; }
 
-    bool MongoDbVerboseLogging { get; }
+    /// <summary>
+    /// Enable/Disable verbose logging
+    /// </summary>
+    bool VerboseLogging { get; }
 
+    /// <summary>
+    /// Your application name
+    /// </summary>
     string ApplicationName { get; }
 
+    /// <summary>
+    /// Enable/Disable direct connection
+    /// </summary>
     bool DirectConnection { get; }
 
+    /// <summary>
+    /// User name and login for connection
+    /// </summary>
     CredentialSettings? Credential { get; }
+
+    /// <summary>
+    /// Enable/Disable TLS
+    /// </summary>
+    bool UseTls { get; set; }
 }

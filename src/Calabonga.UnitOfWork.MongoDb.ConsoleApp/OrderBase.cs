@@ -42,5 +42,6 @@ public class OrderExternal : OrderBase
 
 public class DocumentBaseMetadata<TType>
 {
-    [BsonId] public TType Id { get; set; } = default!;
+    [BsonId]
+    public TType Id { get; set; } = default!;
 }
