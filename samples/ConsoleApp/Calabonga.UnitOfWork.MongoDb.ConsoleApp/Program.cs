@@ -58,6 +58,9 @@ try
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
     await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync, cancellationTokenSource.Token, session);
+    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
+    await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
 
     logger.LogInformation("Done");
 
@@ -69,21 +72,89 @@ catch (Exception exception)
 
 
 #region Transaction
-
-async Task ProcessDataInTransactionAsync(
-    IRepository<OrderBase, int> repositoryInTransaction,
-    IClientSessionHandle session,
-    CancellationToken cancellationToken)
+async Task ProcessDataInTransactionAsync4(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
 {
-    // await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+    await repositoryInTransaction.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, transactionContext.CancellationToken);
 
-    // var internalOrder1 = DocumentHelper.GetInternal(99);
-    // await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
-    // logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
 
-    // var internalOrder2 = DocumentHelper.GetInternal(100);
-    // await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
-    // logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new InvalidOperationException();
+}
+
+async Task ProcessDataInTransactionAsync3(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new InvalidOperationException();
+}
+
+async Task ProcessDataInTransactionAsync2(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+{
+    await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        logger!.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new InvalidOperationException();
+}
+
+async Task ProcessDataInTransactionAsync(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+{
+    await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
 
     var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
     var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
@@ -95,7 +166,7 @@ async Task ProcessDataInTransactionAsync(
         logger!.LogInformation("Update {}", result.ModifiedCount);
     }
 
-    //throw new InvalidOperationException();
+    throw new InvalidOperationException();
 }
 
 #endregion

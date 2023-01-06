@@ -5,7 +5,8 @@ namespace Calabonga.UnitOfWork.MongoDb;
 public interface IUnitOfWork : IDisposable
 {
     /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:21 IUnitOfWork)
+    /// Ensures that the MongoDb replica set enabled.
+    /// Warning: Do not use this method on the production.
     /// </summary>
     void EnsureReplicationSetReady();
 
@@ -18,34 +19,25 @@ public interface IUnitOfWork : IDisposable
     IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>;
 
     /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:20 IUnitOfWork)
+    /// Returns session instance
     /// </summary>
     IClientSessionHandle GetSession();
 
     /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:22 IUnitOfWork)
+    /// Returns session instance
     /// </summary>
     /// <param name="cancellationToken"></param>
-    Task<IClientSessionHandle>? GetSessionAsync(CancellationToken cancellationToken);
+    Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:22 IUnitOfWork)
+    /// Runs awaitable method in transaction scope. With new instance of repository creation.
     /// </summary>
-    /// <param name="processOperationWithTransaction"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="session"></param>
-    /// <param name="transactionOptions"></param>
-    Task UseTransactionAsync(Action<IClientSessionHandle, CancellationToken> processOperationWithTransaction, CancellationToken cancellationToken, IClientSessionHandle? session, TransactionOptions? transactionOptions = null);
-
-    /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:22 IUnitOfWork)
-    /// </summary>
-    /// <typeparam name="TDocument"></typeparam>
-    /// <typeparam name="TType"></typeparam>
-    /// <param name="taskOperation"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="session"></param>
-    /// <param name="transactionOptions"></param>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="cancellationToken">cancellation token</param>
+    /// <param name="session">session</param>
+    /// <param name="transactionOptions">options</param>
     Task UseTransactionAsync<TDocument, TType>
     (
         Func<IRepository<TDocument, TType>, IClientSessionHandle, CancellationToken, Task> taskOperation,
@@ -53,4 +45,47 @@ public interface IUnitOfWork : IDisposable
         IClientSessionHandle? session,
         TransactionOptions? transactionOptions = null)
         where TDocument : DocumentBase<TType>;
+
+    Task UseTransactionAsync<TDocument, TType>
+    (
+        Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
+        TransactionContext transactionContext)
+        where TDocument : DocumentBase<TType>;
+
+    /// <summary>
+    /// Runs awaitable method in transaction scope. Using instance of the repository already exist.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="repository">instance of the repository</param>
+    /// <param name="cancellationToken">cancellation token</param>
+    /// <param name="session">session</param>
+    /// <param name="transactionOptions">options</param>
+    Task UseTransactionAsync<TDocument, TType>
+    (
+        Func<IRepository<TDocument, TType>, IClientSessionHandle, CancellationToken, Task> taskOperation,
+        IRepository<TDocument, TType> repository,
+        CancellationToken cancellationToken,
+        IClientSessionHandle? session,
+        TransactionOptions? transactionOptions = null) where TDocument : DocumentBase<TType>;
+
+    /// <summary>
+    /// Runs awaitable method in transaction scope. Using instance of the repository already exist.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="repository">instance of the repository</param>
+    /// <param name="transactionContext">Transaction context with additional helpful instances for operation</param>
+    /// <returns></returns>
+    Task UseTransactionAsync<TDocument, TType>
+    (
+        Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
+        IRepository<TDocument, TType> repository,
+        TransactionContext transactionContext)
+        where TDocument : DocumentBase<TType>;
+
+
+
 }
