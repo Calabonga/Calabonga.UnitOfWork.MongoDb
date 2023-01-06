@@ -18,7 +18,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         {
             services.TryAddScoped<IUnitOfWork, UnitOfWork>();
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
-            services.TryAddScoped<ICollectionNameSelector, CollectionNameSelector>();
+            services.TryAddScoped<ICollectionNameSelector, DefaultCollectionNameSelector>();
 
             var mongoDbSettings = new DatabaseSettings();
             applyConfiguration(mongoDbSettings);
@@ -38,7 +38,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         {
             services.TryAddScoped<IUnitOfWork, UnitOfWork>();
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
-            services.TryAddScoped<ICollectionNameSelector, CollectionNameSelector>();
+            services.TryAddScoped<ICollectionNameSelector, DefaultCollectionNameSelector>();
 
             var mongoDbSettings = configurationSection.Get<DatabaseSettings>();
 

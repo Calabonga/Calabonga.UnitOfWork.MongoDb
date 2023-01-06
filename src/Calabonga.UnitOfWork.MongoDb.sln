@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calabonga.UnitOfWork.MongoDb.ConsoleApp", "..\samples\ConsoleApp\Calabonga.UnitOfWork.MongoDb.ConsoleApp\Calabonga.UnitOfWork.MongoDb.ConsoleApp.csproj", "{47275CBF-D25D-4F4D-829E-CCF20FEC01F3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,10 +22,6 @@ Global
 		{56331EA4-37B9-4813-B7C9-7C417378CA1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56331EA4-37B9-4813-B7C9-7C417378CA1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56331EA4-37B9-4813-B7C9-7C417378CA1D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{47275CBF-D25D-4F4D-829E-CCF20FEC01F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{47275CBF-D25D-4F4D-829E-CCF20FEC01F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{47275CBF-D25D-4F4D-829E-CCF20FEC01F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{47275CBF-D25D-4F4D-829E-CCF20FEC01F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

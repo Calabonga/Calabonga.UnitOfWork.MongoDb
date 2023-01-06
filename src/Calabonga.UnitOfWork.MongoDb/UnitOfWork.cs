@@ -106,7 +106,43 @@ public sealed class UnitOfWork : IUnitOfWork
         }
     }
 
-    public Task UseTransactionAsync<TDocument, TType>(Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation, TransactionContext transactionContext) where TDocument : DocumentBase<TType> => throw new NotImplementedException();
+    public async Task UseTransactionAsync<TDocument, TType>(
+        Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
+        TransactionContext transactionContext)
+        where TDocument : DocumentBase<TType>
+    {
+        transactionContext.SetLogger(_logger);
+
+        var repository = GetRepository<TDocument, TType>();
+
+        using var session = transactionContext.Session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, transactionContext.CancellationToken);
+
+        try
+        {
+            var options = transactionContext.TransactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            session.StartTransaction(options);
+
+            await taskOperation(repository, transactionContext);
+
+            await session.CommitTransactionAsync(transactionContext.CancellationToken);
+
+        }
+        catch (NotSupportedException)
+        {
+            throw;
+        }
+
+        catch (Exception exception)
+        {
+            await session.AbortTransactionAsync(transactionContext.CancellationToken);
+            if (transactionContext.Logger.IsEnabled(LogLevel.Information))
+            {
+                transactionContext.Logger.LogError("[TRANSACTION ROLLBACK] {Id} {Message}", session.ServerSession.Id, exception.Message);
+            }
+
+            throw;
+        }
+    }
 
     /// <summary>
     /// Runs awaitable method in transaction scope. Using instance of the repository already exist.
@@ -201,7 +237,6 @@ public sealed class UnitOfWork : IUnitOfWork
             throw;
         }
     }
-
 
     #region Disposable
 

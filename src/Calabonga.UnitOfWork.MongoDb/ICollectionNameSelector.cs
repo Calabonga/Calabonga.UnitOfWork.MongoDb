@@ -1,13 +1,15 @@
 ﻿namespace Calabonga.UnitOfWork.MongoDb
 {
-    // Calabonga: update summary (2023-01-02 05:06 ICollectionNameSelector)
+    /// <summary>
+    /// Collection name selector for MongoDb entities
+    /// </summary>
     public interface ICollectionNameSelector
     {
         /// <summary>
-        /// // Calabonga: update summary (2023-01-02 05:06 ICollectionNameSelector)
+        /// Returns a name for entity by it type
         /// </summary>
         /// <param name="typeName"></param>
-        /// <returns></returns>
+        /// <returns>name</returns>
         string GetMongoCollectionName(string typeName);
     }
 }

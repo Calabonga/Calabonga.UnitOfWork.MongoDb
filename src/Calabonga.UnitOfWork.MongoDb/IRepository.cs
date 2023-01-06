@@ -28,14 +28,13 @@ public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TT
     #endregion
 
     /// <summary>
-    /// // Calabonga: update summary (2023-01-02 03:24 IRepository)
+    /// Returns paged collection of the items
     /// </summary>
     /// <param name="pageSize"></param>
     /// <param name="filter"></param>
     /// <param name="cancellationToken"></param>
     /// <param name="options"></param>
     /// <param name="pageIndex"></param>
-    /// <returns></returns>
     Task<IPagedList<TDocument>> GetPagedAsync(
         int pageIndex,
         int pageSize,

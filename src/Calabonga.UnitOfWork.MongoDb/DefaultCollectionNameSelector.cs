@@ -2,8 +2,16 @@
 
 namespace Calabonga.UnitOfWork.MongoDb;
 
-public class CollectionNameSelector : ICollectionNameSelector
+/// <summary>
+/// Default collection name selector
+/// </summary>
+public class DefaultCollectionNameSelector : ICollectionNameSelector
 {
+    /// <summary>
+    /// Returns a name for entity by it type
+    /// </summary>
+    /// <param name="typeName"></param>
+    /// <returns>name</returns>
     public string GetMongoCollectionName(string typeName)
     {
         var words = typeName.Split(new[] { "_", " " }, StringSplitOptions.RemoveEmptyEntries);

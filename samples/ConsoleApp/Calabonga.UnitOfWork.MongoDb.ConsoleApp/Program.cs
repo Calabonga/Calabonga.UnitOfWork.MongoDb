@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Serilog;
+using System.Text.Json;
 
 #region configuration
 
@@ -15,20 +16,20 @@ services.AddLogging(x => x.AddSerilog(loggerConfiguration));
 
 #region Configure
 
-//services.AddUnitOfWork(config =>
-//{
-//    //config.Credential = new CredentialSettings { Login = "mongo", Password = "mongo", Mechanism = "SCRAM-SHA-1" };
-//    config.DatabaseName = "MyDatabase";
-//    config.Hosts = new[] { "localhost" };
-//    config.MongoDbPort = 27017;
-//    config.DirectConnection = true;
-//    config.ReplicaSetName = "rs0";
-//    config.ApplicationName = "Demo";
-//    config.VerboseLogging = false;
-//    config.UseTls = false;
-//});
+// services.AddUnitOfWork(config =>
+// {
+// config.Credential = new CredentialSettings { Login = "mongo", Password = "mongo", Mechanism = "SCRAM-SHA-1" };
+// config.DatabaseName = "MyDatabase";
+// config.Hosts = new[] { "localhost" };
+// config.MongoDbPort = 27017;
+// config.DirectConnection = true;
+// config.ReplicaSetName = "rs0";
+// config.ApplicationName = "Demo";
+// config.VerboseLogging = false;
+// config.UseTls = false;
+// });
 
-services.AddScoped<ICollectionNameSelector, MyCollectionNameSelector>();
+services.AddScoped<ICollectionNameSelector, CustomCollectionNameSelector>();
 
 services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
 
@@ -44,85 +45,69 @@ var repository = unitOfWork!.GetRepository<OrderBase, int>();
 
 logger.LogInformation("Application started with Namespace: {Name}", repository.Collection.CollectionNamespace);
 
+var database = container.GetRequiredService<IDatabaseSettings>();
+
+logger.LogInformation("{Settings}", JsonSerializer.Serialize(database, new JsonSerializerOptions { WriteIndented = true }));
+
 try
 {
 
 #if DEBUG
 
     // Ensure Replication Set enabled
-    // unitOfWork.EnsureReplicationSetReady();
+    logger.LogInformation("Checking transactions available");
+    unitOfWork.EnsureReplicationSetReady();
+    logger.LogInformation("Transactions is Ok");
 
 #endif
 
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
-    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync, cancellationTokenSource.Token, session);
-    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, cancellationTokenSource.Token, session);
     await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
     await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
 
     logger.LogInformation("Done");
 
 }
 catch (Exception exception)
 {
-    logger.LogError(exception.Message);
+    logger.LogError(exception.GetBaseException().Message);
 }
 
 
 #region Transaction
-async Task ProcessDataInTransactionAsync4(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+
+async Task ProcessDataInTransactionAsync1(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
 {
-    await repositoryInTransaction.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, transactionContext.CancellationToken);
+    await repository.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
 
     var internalOrder1 = DocumentHelper.GetInternal(99);
-    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
-    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
 
     var internalOrder2 = DocumentHelper.GetInternal(100);
-    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
-    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
 
     var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
     var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
-    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+    var result = await repositoryInTransaction.Collection
+        .UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
 
     if (result.IsModifiedCountAvailable)
     {
-        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
+        logger!.LogInformation("Update {}", result.ModifiedCount);
     }
 
-    throw new InvalidOperationException();
-}
-
-async Task ProcessDataInTransactionAsync3(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
-{
-    await repositoryInTransaction.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, transactionContext.CancellationToken);
-
-    var internalOrder1 = DocumentHelper.GetInternal(99);
-    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
-    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
-
-    var internalOrder2 = DocumentHelper.GetInternal(100);
-    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
-    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
-
-    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
-    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
-    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
-
-    if (result.IsModifiedCountAvailable)
-    {
-        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
-    }
-
-    throw new InvalidOperationException();
+    throw new ApplicationException("EXCEPTION! BANG!");
 }
 
 async Task ProcessDataInTransactionAsync2(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
 {
-    await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+    await repositoryInTransaction.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
 
     var internalOrder1 = DocumentHelper.GetInternal(99);
     await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
@@ -141,47 +126,55 @@ async Task ProcessDataInTransactionAsync2(IRepository<OrderBase, int> repository
         logger!.LogInformation("Update {}", result.ModifiedCount);
     }
 
-    throw new InvalidOperationException();
+    throw new ApplicationException("EXCEPTION! BANG!");
 }
 
-async Task ProcessDataInTransactionAsync(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+async Task ProcessDataInTransactionAsync3(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
 {
-    await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, cancellationToken);
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
 
     var internalOrder1 = DocumentHelper.GetInternal(99);
-    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
-    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
 
     var internalOrder2 = DocumentHelper.GetInternal(100);
-    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
-    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
 
     var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
     var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
-    var result = await repositoryInTransaction.Collection
-    .UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
 
     if (result.IsModifiedCountAvailable)
     {
-        logger!.LogInformation("Update {}", result.ModifiedCount);
+        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
     }
 
-    throw new InvalidOperationException();
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync4(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var updateResult = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (updateResult.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", updateResult.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
 }
 
 #endregion
-
-
-public class MyCollectionNameSelector : ICollectionNameSelector
-{
-    public string GetMongoCollectionName(string typeName)
-    {
-        switch (typeName)
-        {
-            case "OrderBase":
-                return "orders";
-        }
-
-        return typeName;
-    }
-}
