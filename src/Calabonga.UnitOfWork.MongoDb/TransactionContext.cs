@@ -40,5 +40,11 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// </summary>
         /// <param name="logger"></param>
         internal void SetLogger(ILogger<UnitOfWork> logger) => Logger = logger;
+
+        /// <summary>
+        /// Returns default TransactionContext with default settings.
+        /// TransactionOptions as new object. Session is null. CancellationToken.None
+        /// </summary>
+        public static TransactionContext Default => new(new TransactionOptions(), null, CancellationToken.None);
     }
 }

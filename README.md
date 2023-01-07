@@ -1,36 +1,38 @@
 # UnitOfWork для MongoDb
 
-Unit Of Work очень полезный паттерн, особенно если говорить в контексте Объектно-Реляционной логики (PoEAA). В приложениях часто используется шаблон Repository для инкапсуляции логики работы с БД. Часто приходится оперировать набором сущностей и моделей, для управления которыми создается также большое количество репозиториев. Паттерн Unit of Work помогает упростить работу с различными репозиториями и дает уверенность, что все репозитории будут использовать один и тот же DbContext. Но это всё про EntityFramework и значит про реляционные базы данных. А что же MongoDb?...
+`Unit Of Work` очень полезный паттерн, особенно если говорить в контексте Объектно-Реляционной логики (PoEAA). В приложениях часто используется шаблон `Repository` для инкапсуляции логики работы с БД. Часто приходится оперировать набором сущностей и моделей, для управления которыми создается также большое количество репозиториев. Паттерн `Unit of Work` помогает упростить работу с различными репозиториями и дает уверенность, что все репозитории будут использовать один и тот же `DbContext`. Но это всё про `EntityFramework` и значит про реляционные базы данных. А что же MongoDb?...
 
 ## По-другому
 
-Представленный вашему вниманию проект - всего лишь попытка упростить жизнь тем, кто использует MongoDb в повседневной работе, ну, или просто использует достаточно часто. Unit Of Work прекрасно работает с реляциями, но MongoDb - документо-ориентированная база данных, а это значит, что она работает по-другому. Возникла идея о том, как можно этот паттерн "натянуть" на подобную базу данных.
+Представленный вашему вниманию проект - всего лишь попытка упростить жизнь тем, кто использует MongoDb в повседневной работе, ну, или просто использует достаточно часто. `Unit Of Work прекрасно работает с реляциями, но MongoDb - документо-ориентированная база данных, а это значит, что она работает по-другому. Возникла идея о том, как можно этот паттерн "натянуть" на подобную базу данных.
 
 ## MongoDb.Driver
 
-Обязательно надо сказать, что сборка использует другой nuget-пакет, который называется MongoDB.Driver. Просто его возможности немного расширены.
+Обязательно надо сказать, что сборка использует другой nuget-пакет, который называется `MongoDB.Driver`. Просто его возможности немного расширены.
 
 ## Возможности
 
-Надо сказать честно, что не всё до конца получилось так, как задумывалось. И вс это потому, что с учем специфики работы самой MongoDb. Но есть полезные штуки, которые могут быть действительные полезны. Попробую перечислить то, что уже реализовано:
+Надо сказать честно, что не всё до конца получилось так, как задумывалось. И вс это потому, что с учетом специфики работы самой MongoDb. Но есть полезные штуки, которые могут быть действительные полезны. Попробую перечислить то, что уже реализовано:
 
 * Настройка подключения через appSettings.json
   * ConnectionString
   * набор параметров MongoClientSettings
 * MongoDbVerboseLogging
 * Тестирование подключение Transactions (ReplicaSet)
-* Полный доступ к Collection (любые CRUD операции из MongoDB.Driver)
-* Получение IClientSessionHandle по требованию
+* Полный доступ к `Collection` (любые CRUD операции из MongoDB.Driver)
+* Получение `IClientSessionHandle` по требованию
 * Постраничная разбивка на страницы
 * Получение в Repository сущности другие репозитории для других сущностей
- 
+
 ## Три простых шага
 
-Для начала скажу, что IUnitOfWork создавался в первую очередь для того, чтобы его можно было легко получить через вливание зависимостей, то есть для использования Dependency Injection. Всё что нужно сделать - это добавить секцию настроек в appSettings.json, зарегистрировать в контейнере (ServiceCollection) и начать использовать.
+Для начала скажу, что `IUnitOfWork` создавался в первую очередь для того, чтобы его можно было легко получить через вливание зависимостей, то есть для использования Dependency Injection. Всё что нужно сделать - это добавить секцию настроек в appSettings.json, зарегистрировать в контейнере (`ServiceCollection`) и начать использовать.
 
 ### Шаг 1: appsettings.json
+
 Пример настроек для подключения к localhost, без использования ssl и т.д. и т.п.
-``` json
+
+``` JSON
 {
     "DatabaseSettings": {
         "ConnectionString": "mongodb://localhost:27017/?readPreference=primary&ssl=false&directConnection=true",
@@ -49,18 +51,21 @@ Unit Of Work очень полезный паттерн, особенно есл
 }
 ```
 
-В данном пример указано ConnectionString, которая переопределит все настройки указанные ниже. Просто есть есть ConnectionString - остальные настройки игнорируются. В остальных случаях всё как обычно, и, надо сказать, это далеко неполный набор параметров, который используется для создания подключения. По мере необходимости набор может быть расширен.
+В данном примере указан ConnectionString, которая переопределит все настройки указанные ниже. Просто если есть ConnectionString - остальные настройки игнорируются. В остальных случаях всё как обычно, и, надо сказать, это далеко неполный набор параметров, который используется для создания подключения. По мере необходимости набор может быть расширен.
 
-Использование appSettings.json не обязательно. Подключить можно и с фиксированными настройками (hardcoded), задав конфигурацию прямо в коде.
+Использование `appSettings.json` не обязательно. Подключить можно и с фиксированными настройками (hardcoded), задав конфигурацию прямо в коде.
 
 ### Шаг 2: регистрация в DI-контейнере
 
-Подключить можно двумя способами. Первый - это прочитав настройки из секции appSettings.json:
+Подключить можно двумя способами. Первый - это прочитать настройки из секции `appSettings.json`:
+
 ``` csharp
 // read configuration section DatabaseSettings
 services.AddUnitOfWork(configuration.GetSection(nameof(DatabaseSettings)));
-Bторой способ не требует наличия appSettings.json, просто задайте параметры в коде:
+```
+Второй способ не требует наличия `appSettings.json`, просто задайте параметры в коде:
 
+``` csharp
 services.AddUnitOfWork(config =>
 {
     config.Credential = new CredentialSettings { Login = "sa", Password = "password" };
@@ -70,7 +75,6 @@ services.AddUnitOfWork(config =>
     config.VerboseLogging = false;
 });
 ```
-
 ### Шаг 3: использование
 
 Можно внедрить зависимость в PageModel, например, так:
@@ -94,18 +98,24 @@ namespace WebApplicationWithMongo.Pages
 }
 ```
 
-Теперь в методе можно использовать `_unitOfWork`, например, для получения коллекции объектов с разбиение на страницы (paged data):
+Теперь в методе можно использовать `_unitOfWork`, например, для получения коллекции объектов с разбиением на страницы (paged data):
 
 ``` csharp
 public async Task<IActionResult> OnGetAsync(int pageIndex = 0, int pageSize = 10)
 {
     var repository = _unitOfWork.GetRepository<Order, int>();
-    Data = await repository.GetPagedAsync(pageIndex, pageSize, FilterDefinition<Order>.Empty, HttpContext.RequestAborted);
+
+    Data = await repository.GetPagedAsync(
+        pageIndex,
+        pageSize,
+        FilterDefinition<Order>.Empty,
+        HttpContext.RequestAborted);
+
     return Page();
 }
 ```
 
-В данном примере я использую объекты Order:
+В данном примере я использую объекты `Order`:
 
 ``` csharp
 [BsonIgnoreExtraElements]
@@ -128,7 +138,7 @@ public class Order : DocumentBase<int>
 }
 ```
 
-и OrderItem:
+и `OrderItem`:
 
 ``` csharp
 public class OrderItem : DocumentBase<int>
@@ -147,6 +157,151 @@ public class OrderItem : DocumentBase<int>
 
 ```
 
+### Транзакции в MongoDb
+
+Для примера хочу показать как использовать транзакции в MongoDb при помощи моей библиотеки. Для начала нужно определить, при каких условиях возможен вызов методов CRUD в MongoDb через транзакции.
+
+База данных MongoDb должна быть настроена соответствующим образом. То есть поддерживать транзакции. Как настроить транзакции в MongoDb можно посмотреть в статье [Configuring ReplicaSet](https://github.com/UpSync-Dev/docker-compose-mongo-replica-set). Если MongoDb запущен в режиме *Statenalone* - транзакции работать не будут. Для проверки работоспособности транзакций можно воспользоваться методом [EnsureReplicationSetReady](https://github.com/Calabonga/Calabonga.UnitOfWork.MongoDb/blob/e5b9435ac99578351cad7a104da46b297548d46b/src/Calabonga.UnitOfWork.MongoDb/IUnitOfWork.cs#L10).
+Вызов методов, которые долны быть выполнены в транзакции следует через специальные методы [UseTransactionAsync](https://github.com/Calabonga/Calabonga.UnitOfWork.MongoDb/blob/e5b9435ac99578351cad7a104da46b297548d46b/src/Calabonga.UnitOfWork.MongoDb/IUnitOfWork.cs#L38) или другие его перегрузки.
+
+Пример, как вызывать методы с транзакциями:
+``` csharp
+await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, HttpContext.RequestAborted, session);
+
+await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, HttpContext.RequestAborted, session);
+
+await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, HttpContext.RequestAborted));
+
+await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, HttpContext.RequestAborted));
+
+await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync5, TransactionContext.Default);
+```
+А вот сами методы, которые использованы в предыдущем примере кода:
+
+``` csharp
+async Task ProcessDataInTransactionAsync1(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+{
+    await repository.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection
+        .UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        logger!.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync2(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder2, null, cancellationToken);
+    logger!.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, cancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        logger!.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync3(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var result = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (result.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", result.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync4(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var updateResult = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (updateResult.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", updateResult.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var updateResult = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (updateResult.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", updateResult.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+```
+Настоятельно рекомендую ознакомиться с тем, как используются методы вызова CRUD операций внутри каждого из методов. Обратите внимание на то, что обязательно использование *session* для вызова операций на операции *Insert/Update/Delete*. В противном случае, при ошибке или исключении отмены операции не произойдет.
+
 ## Комментарии, пожелания, замечания
 
 Пишите комментарии к видео на сайте [www.calabonga.net](https://www.calabonga.net)
@@ -155,6 +310,7 @@ public class OrderItem : DocumentBase<int>
 
 * [Nuget пакет](https://www.nuget.org/packages/Calabonga.UnitOfWork.MongoDb/)
 * [Статья в блоге](https://www.calabonga.net/blog/post/unit-of-work-for-mongodb)
+* [UnitOfWork для MongoDb на YouTube](https://youtu.be/xqqR7YVZJww)
 
 # Автор
 

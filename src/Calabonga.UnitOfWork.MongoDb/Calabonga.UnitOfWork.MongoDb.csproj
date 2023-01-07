@@ -15,7 +15,7 @@
 		<Description>Unit of Work implementation for MongoDb</Description>
 		<PackageProjectUrl>https://www.calabonga.net/blog/post/unit-of-work-for-mongodb</PackageProjectUrl>
 		<PackageTags>calabonga pattern unitofwork mongodb repository</PackageTags>
-		<PackageReleaseNotes>Use Transaction method signatures extended. More options - more opportunities. Summaries added for almost all methods</PackageReleaseNotes>
+		<PackageReleaseNotes>UseTransactionAsync method signatures extended. More options - more opportunities. Summaries added for all methods. Getting a TransactionContext instance was simplified with property Default </PackageReleaseNotes>
 		<AssemblyVersion>1.0.3.0</AssemblyVersion>
 		<FileVersion>1.0.3.0</FileVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

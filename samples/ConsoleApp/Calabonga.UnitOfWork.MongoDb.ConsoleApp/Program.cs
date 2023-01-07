@@ -68,6 +68,7 @@ try
     await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
     await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
     await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync5, TransactionContext.Default);
 
     logger.LogInformation("Done");
 
@@ -154,6 +155,30 @@ async Task ProcessDataInTransactionAsync3(IRepository<OrderBase, int> repository
 }
 
 async Task ProcessDataInTransactionAsync4(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
+{
+    await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
+
+    var internalOrder1 = DocumentHelper.GetInternal(99);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder1, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item1}", internalOrder1);
+
+    var internalOrder2 = DocumentHelper.GetInternal(100);
+    await repositoryInTransaction.Collection.InsertOneAsync(transactionContext.Session, internalOrder2, null, transactionContext.CancellationToken);
+    transactionContext.Logger.LogInformation("InsertOne: {item2}", internalOrder2);
+
+    var filter = Builders<OrderBase>.Filter.Eq(x => x.Id, 99);
+    var updateDefinition = Builders<OrderBase>.Update.Set(x => x.Description, "Updated description");
+    var updateResult = await repositoryInTransaction.Collection.UpdateOneAsync(transactionContext.Session, filter, updateDefinition, new UpdateOptions { IsUpsert = false }, transactionContext.CancellationToken);
+
+    if (updateResult.IsModifiedCountAvailable)
+    {
+        transactionContext.Logger.LogInformation("Update {}", updateResult.ModifiedCount);
+    }
+
+    throw new ApplicationException("EXCEPTION! BANG!");
+}
+
+async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repositoryInTransaction, TransactionContext transactionContext)
 {
     await repositoryInTransaction.Collection.DeleteManyAsync(transactionContext.Session, FilterDefinition<OrderBase>.Empty, null, transactionContext.CancellationToken);
 
