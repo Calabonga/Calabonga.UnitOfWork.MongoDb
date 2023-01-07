@@ -4,6 +4,11 @@ using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb
 {
+    /// <summary>
+    /// Generic repository for wrapper of mongoDb Collection
+    /// </summary>
+    /// <typeparam name="TDocument">The type of the entity.</typeparam>
+    /// <typeparam name="TType"></typeparam>
     public sealed class Repository<TDocument, TType> : IRepository<TDocument, TType>
         where TDocument : DocumentBase<TType>
     {
@@ -45,7 +50,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         {
             var mongoDb = databaseBuilder.Build();
 
-            if (mongoDb.GetCollection<BsonDocument>(_collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name)) == null)
+            if (mongoDb.GetCollection<BsonDocument>(GetInternalName()) == null)
             {
                 mongoDb.CreateCollection(_entityName);
             }
@@ -62,23 +67,23 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        private string SetDefaultName()
-        {
-            var entityName = _collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name);
-            if (string.IsNullOrEmpty(entityName))
-            {
-                throw new ArgumentNullException(nameof(entityName));
-            }
-
-            return _collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name);
-        }
+        private string SetDefaultName() => GetInternalName();
 
         #endregion
 
+        /// <summary>Gets the namespace of the collection.</summary>
         public CollectionNamespace CollectionNamespace => Collection.CollectionNamespace;
+
+        /// <summary>Gets the database.</summary>
         public IMongoDatabase Database => Collection.Database;
+
+        /// <summary>Gets the document serializer.</summary>
         public IBsonSerializer<TDocument> DocumentSerializer => Collection.DocumentSerializer;
+
+        /// <summary>Gets the index manager.</summary>
         public IMongoIndexManager<TDocument> Indexes => Collection.Indexes;
+
+        /// <summary>Gets the settings.</summary>
         public MongoCollectionSettings Settings => Collection.Settings;
 
         /// <summary>
@@ -120,6 +125,17 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// <returns>транзакцию для Write-операций</returns>
         private Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken = default, ClientSessionOptions? options = null)
             => Collection.Database.Client.StartSessionAsync(options, cancellationToken);
+
+        #endregion
+
+        #region privates
+        private string GetInternalName()
+        {
+            var name = _collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name);
+            return string.IsNullOrEmpty(name)
+                ? throw new UnitOfWorkArgumentNullException($"Cannot read type name from entity in ICllectionNameSelector.GetMongoCollectionName. Argument is NULL: {nameof(name)}")
+                : name;
+        }
 
         #endregion
     }

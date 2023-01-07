@@ -20,6 +20,11 @@ public sealed class UnitOfWork : IUnitOfWork
         _databaseBuilder = databaseBuilder;
     }
 
+    /// <summary>
+    /// Returns repository wrapper for MongoDb collection
+    /// </summary>
+    /// <typeparam name="TDocument">type of Document</typeparam>
+    /// <typeparam name="TType">type of BsonId</typeparam>
     public IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>
     {
         _repositories ??= new Dictionary<Type, object>();
@@ -32,6 +37,9 @@ public sealed class UnitOfWork : IUnitOfWork
         return (IRepository<TDocument, TType>)_repositories[type];
     }
 
+    /// <summary>
+    /// Tests that a transaction available in MongoDb replica set
+    /// </summary>
     public void EnsureReplicationSetReady()
     {
         if (_databaseBuilder.Client == null)
@@ -42,6 +50,9 @@ public sealed class UnitOfWork : IUnitOfWork
         _databaseBuilder.Client!.EnsureReplicationSetReady();
     }
 
+    /// <summary>
+    /// Returns session from current client collection <see cref="IMongoClient"/>
+    /// </summary>
     public IClientSessionHandle GetSession()
     {
         if (_databaseBuilder.Client == null)
@@ -51,6 +62,10 @@ public sealed class UnitOfWork : IUnitOfWork
         return _databaseBuilder.Client!.StartSession();
     }
 
+    /// <summary>
+    /// Returns session from current client collection <see cref="IMongoClient"/>
+    /// </summary>
+    /// <param name="cancellationToken"></param>
     public Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken)
     {
         if (_databaseBuilder.Client == null)
@@ -106,6 +121,13 @@ public sealed class UnitOfWork : IUnitOfWork
         }
     }
 
+    /// <summary>
+    /// Runs awaitable method in transaction scope. With new instance of repository creation.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="transactionContext">transaction context object</param>
     public async Task UseTransactionAsync<TDocument, TType>(
         Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
         TransactionContext transactionContext)

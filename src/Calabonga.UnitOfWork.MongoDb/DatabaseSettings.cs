@@ -3,7 +3,7 @@
 /// <summary>
 /// Database settings for MongoDb connection
 /// </summary>
-public class DatabaseSettings : IDatabaseSettings
+public sealed class DatabaseSettings : IDatabaseSettings
 {
     /// <summary>
     /// Overrides all others settings. Just returns new MongoClient with this connection string

@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Calabonga.UnitOfWork.MongoDb
 {
+    /// <summary>
+    /// Extension for <see cref="IServiceCollection"/>
+    /// </summary>
     public static class UnitOfWorkServiceCollectionExtensions
     {
         ///// <summary>
@@ -44,7 +47,7 @@ namespace Calabonga.UnitOfWork.MongoDb
 
             if (mongoDbSettings == null)
             {
-                throw new ArgumentNullException(nameof(DatabaseSettings));
+                throw new UnitOfWorkArgumentNullException(nameof(DatabaseSettings));
             }
 
             services.TryAddScoped<IDatabaseSettings>(_ => mongoDbSettings);

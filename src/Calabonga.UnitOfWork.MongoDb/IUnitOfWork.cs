@@ -2,6 +2,9 @@
 
 namespace Calabonga.UnitOfWork.MongoDb;
 
+/// <summary>
+/// Unit of Work interface for pattern implementation
+/// </summary>
 public interface IUnitOfWork : IDisposable
 {
     /// <summary>
@@ -19,12 +22,12 @@ public interface IUnitOfWork : IDisposable
     IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>;
 
     /// <summary>
-    /// Returns session instance
+    /// Returns session from current client collection <see cref="IMongoClient"/>
     /// </summary>
     IClientSessionHandle GetSession();
 
     /// <summary>
-    /// Returns session instance
+    /// Returns session from current client collection <see cref="IMongoClient"/>
     /// </summary>
     /// <param name="cancellationToken"></param>
     Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken);
@@ -46,6 +49,13 @@ public interface IUnitOfWork : IDisposable
         TransactionOptions? transactionOptions = null)
         where TDocument : DocumentBase<TType>;
 
+    /// <summary>
+    /// Runs awaitable method in transaction scope. With new instance of repository creation.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="transactionContext">transaction context object</param>
     Task UseTransactionAsync<TDocument, TType>
     (
         Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
@@ -85,7 +95,4 @@ public interface IUnitOfWork : IDisposable
         IRepository<TDocument, TType> repository,
         TransactionContext transactionContext)
         where TDocument : DocumentBase<TType>;
-
-
-
 }

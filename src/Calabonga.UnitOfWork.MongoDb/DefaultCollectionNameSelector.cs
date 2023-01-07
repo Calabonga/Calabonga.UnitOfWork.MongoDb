@@ -5,7 +5,7 @@ namespace Calabonga.UnitOfWork.MongoDb;
 /// <summary>
 /// Default collection name selector
 /// </summary>
-public class DefaultCollectionNameSelector : ICollectionNameSelector
+public sealed class DefaultCollectionNameSelector : ICollectionNameSelector
 {
     /// <summary>
     /// Returns a name for entity by it type
