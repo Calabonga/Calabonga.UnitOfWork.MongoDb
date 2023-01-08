@@ -149,7 +149,7 @@ public class OrderItem : DocumentBase<int>
 
 ## Комментарии, пожелания, замечания
 
-Пишите комментарии к видео на сайте [www.calabonga.net](https://www.calabonga.net)
+Пишите комментарии к видео на сайте [www.calabonga.net](https://www.calabonga.net/blog/post/unit-of-work-for-mongodb)
 
 # Ссылки
 
