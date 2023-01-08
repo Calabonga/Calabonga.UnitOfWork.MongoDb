@@ -3,16 +3,15 @@
 namespace Calabonga.UnitOfWork.MongoDb
 {
     /// <summary>
-    /// // Calabonga: update summary (2023-01-04 04:42 MongoClientExtension)
+    /// Extensions for <see cref="IMongoClient"/>
     /// </summary>
     public static class MongoClientExtension
     {
         /// <summary>
-        /// // Calabonga: update summary (2023-01-05 02:02 MongoClientExtension)
+        /// Tests that a transaction available in MongoDb replica set
         /// </summary>
         /// <param name="mongoClient"></param>
         /// <param name="cancellation"></param>
-        /// <returns></returns>
         public static async Task EnsureReplicationSetReadyAsync(
             this IMongoClient mongoClient,
             CancellationToken cancellation)
@@ -50,7 +49,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         }
 
         /// <summary>
-        /// // Calabonga: update summary (2023-01-05 02:02 MongoClientExtension)
+        /// Tests that a transaction available in MongoDb replica set
         /// </summary>
         /// <param name="mongoClient"></param>
         public static void EnsureReplicationSetReady(this IMongoClient mongoClient)
