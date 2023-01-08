@@ -316,6 +316,6 @@ async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repository
 
 Сергей Калабонга (Calabonga)
 
-![Author](https://www.calabonga.net/images/Calabonga.gif)
+![Author](./whatnot/Calabonga.gif)
 
 [Блог по программированию](https://www.calabonga.net)
