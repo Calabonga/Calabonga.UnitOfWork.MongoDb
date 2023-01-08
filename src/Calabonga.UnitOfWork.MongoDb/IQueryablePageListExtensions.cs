@@ -2,6 +2,9 @@
 
 namespace Calabonga.UnitOfWork.MongoDb;
 
+/// <summary>
+/// Extensions fro Queryable LINQ
+/// </summary>
 public static class QueryablePageListExtensions
 {
     /// <summary>

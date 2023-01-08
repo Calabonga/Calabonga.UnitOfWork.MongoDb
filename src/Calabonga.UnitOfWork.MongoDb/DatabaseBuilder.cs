@@ -9,7 +9,7 @@ namespace Calabonga.UnitOfWork.MongoDb;
 /// <summary>
 /// Database configuration builder
 /// </summary>
-public class DatabaseBuilder : IDatabaseBuilder
+public sealed class DatabaseBuilder : IDatabaseBuilder
 {
     private readonly ILogger<DatabaseBuilder> _logger;
 
@@ -41,12 +41,13 @@ public class DatabaseBuilder : IDatabaseBuilder
     /// <summary>
     /// Build MongoDb client base on <see cref="IDatabaseSettings"/>
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A MongoClient</returns>
     private MongoClient GetMongoClient()
     {
         if (!string.IsNullOrEmpty(Settings.ConnectionString))
         {
-            return new MongoClient(Settings.ConnectionString);
+            var settings = MongoClientSettings.FromConnectionString(Settings.ConnectionString);
+            return new MongoClient(settings);
         }
 
         var mongoClientSettings = new MongoClientSettings

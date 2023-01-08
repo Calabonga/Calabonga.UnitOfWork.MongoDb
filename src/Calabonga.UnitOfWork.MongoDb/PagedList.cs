@@ -50,7 +50,7 @@ internal class PagedList<TSource, TResult> : IPagedList<TResult>
     {
         if (indexFrom > pageIndex)
         {
-            throw new ArgumentException(
+            throw new UnitOfWorkArgumentNullException(
                 $"indexFrom: {indexFrom} > pageIndex: {pageIndex}, must indexFrom <= pageIndex");
         }
 

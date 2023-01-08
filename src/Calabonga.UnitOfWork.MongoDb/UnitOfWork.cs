@@ -20,6 +20,11 @@ public sealed class UnitOfWork : IUnitOfWork
         _databaseBuilder = databaseBuilder;
     }
 
+    /// <summary>
+    /// Returns repository wrapper for MongoDb collection
+    /// </summary>
+    /// <typeparam name="TDocument">type of Document</typeparam>
+    /// <typeparam name="TType">type of BsonId</typeparam>
     public IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>
     {
         _repositories ??= new Dictionary<Type, object>();
@@ -32,6 +37,9 @@ public sealed class UnitOfWork : IUnitOfWork
         return (IRepository<TDocument, TType>)_repositories[type];
     }
 
+    /// <summary>
+    /// Tests that a transaction available in MongoDb replica set
+    /// </summary>
     public void EnsureReplicationSetReady()
     {
         if (_databaseBuilder.Client == null)
@@ -42,6 +50,9 @@ public sealed class UnitOfWork : IUnitOfWork
         _databaseBuilder.Client!.EnsureReplicationSetReady();
     }
 
+    /// <summary>
+    /// Returns session from current client collection <see cref="IMongoClient"/>
+    /// </summary>
     public IClientSessionHandle GetSession()
     {
         if (_databaseBuilder.Client == null)
@@ -51,38 +62,28 @@ public sealed class UnitOfWork : IUnitOfWork
         return _databaseBuilder.Client!.StartSession();
     }
 
-    public Task<IClientSessionHandle>? GetSessionAsync(CancellationToken cancellationToken) =>
-        _databaseBuilder.Client?.StartSessionAsync(null, cancellationToken) ?? null;
-
-    public async Task UseTransactionAsync(Action<IClientSessionHandle, CancellationToken> processOperationWithTransaction, CancellationToken cancellationToken, IClientSessionHandle? session, TransactionOptions? transactionOptions = null)
+    /// <summary>
+    /// Returns session from current client collection <see cref="IMongoClient"/>
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    public Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken)
     {
-        using var session1 = session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, cancellationToken);
-
-        try
+        if (_databaseBuilder.Client == null)
         {
-            var options = transactionOptions ?? new TransactionOptions(readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
-            session1.StartTransaction(options);
-            processOperationWithTransaction(session1, cancellationToken);
-            await session1.CommitTransactionAsync(cancellationToken);
+            _databaseBuilder.Build();
         }
-
-        catch (NotSupportedException)
-        {
-            throw;
-        }
-
-        catch (Exception exception)
-        {
-            await session1.AbortTransactionAsync(cancellationToken);
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogError("[TRANSACTION ROLLBACK] {Id} {Message}", session1.ServerSession.Id, exception.Message);
-            }
-
-            throw;
-        }
+        return _databaseBuilder.Client!.StartSessionAsync(null, cancellationToken);
     }
 
+    /// <summary>
+    /// Runs awaitable method in transaction scope. With new instance of repository creation.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="cancellationToken">cancellation token</param>
+    /// <param name="session">session</param>
+    /// <param name="transactionOptions">options</param>
     public async Task UseTransactionAsync<TDocument, TType>
     (
         Func<IRepository<TDocument, TType>, IClientSessionHandle, CancellationToken, Task> taskOperation,
@@ -94,11 +95,11 @@ public sealed class UnitOfWork : IUnitOfWork
 
         try
         {
-            var collection = GetRepository<TDocument, TType>();
+            var repository = GetRepository<TDocument, TType>();
             var options = transactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
             session1.StartTransaction(options);
 
-            await taskOperation(collection, session1, cancellationToken);
+            await taskOperation(repository, session1, cancellationToken);
 
             await session1.CommitTransactionAsync(cancellationToken);
 
@@ -119,6 +120,147 @@ public sealed class UnitOfWork : IUnitOfWork
             throw;
         }
     }
+
+    /// <summary>
+    /// Runs awaitable method in transaction scope. With new instance of repository creation.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="transactionContext">transaction context object</param>
+    public async Task UseTransactionAsync<TDocument, TType>(
+        Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
+        TransactionContext transactionContext)
+        where TDocument : DocumentBase<TType>
+    {
+        transactionContext.SetLogger(_logger);
+
+        var repository = GetRepository<TDocument, TType>();
+
+        using var session = transactionContext.Session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, transactionContext.CancellationToken);
+
+        try
+        {
+            var options = transactionContext.TransactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            session.StartTransaction(options);
+
+            await taskOperation(repository, transactionContext);
+
+            await session.CommitTransactionAsync(transactionContext.CancellationToken);
+
+        }
+        catch (NotSupportedException)
+        {
+            throw;
+        }
+
+        catch (Exception exception)
+        {
+            await session.AbortTransactionAsync(transactionContext.CancellationToken);
+            if (transactionContext.Logger.IsEnabled(LogLevel.Information))
+            {
+                transactionContext.Logger.LogError("[TRANSACTION ROLLBACK] {Id} {Message}", session.ServerSession.Id, exception.Message);
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Runs awaitable method in transaction scope. Using instance of the repository already exist.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="repository">instance of the repository</param>
+    /// <param name="cancellationToken">cancellation token</param>
+    /// <param name="session">session</param>
+    /// <param name="transactionOptions">options</param>
+    public async Task UseTransactionAsync<TDocument, TType>
+    (
+        Func<IRepository<TDocument, TType>, IClientSessionHandle, CancellationToken, Task> taskOperation,
+        IRepository<TDocument, TType> repository,
+        CancellationToken cancellationToken,
+        IClientSessionHandle? session,
+        TransactionOptions? transactionOptions = null) where TDocument : DocumentBase<TType>
+    {
+        using var session1 = session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, cancellationToken);
+
+        try
+        {
+            var options = transactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            session1.StartTransaction(options);
+
+            await taskOperation(repository, session1, cancellationToken);
+
+            await session1.CommitTransactionAsync(cancellationToken);
+
+        }
+        catch (NotSupportedException)
+        {
+            throw;
+        }
+
+        catch (Exception exception)
+        {
+            await session1.AbortTransactionAsync(cancellationToken);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogError("[TRANSACTION ROLLBACK] {Id} {Message}", session1.ServerSession.Id, exception.Message);
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Runs awaitable method in transaction scope. Using instance of the repository already exist.
+    /// </summary>
+    /// <typeparam name="TDocument">type of the repository entity</typeparam>
+    /// <typeparam name="TType">BsonId type</typeparam>
+    /// <param name="taskOperation">operation will run in transaction</param>
+    /// <param name="repository">instance of the repository</param>
+    /// <param name="transactionContext">Transaction context with additional helpful instances for operation</param>
+    /// <returns></returns>
+    public async Task UseTransactionAsync<TDocument, TType>
+    (
+        Func<IRepository<TDocument, TType>, TransactionContext, Task> taskOperation,
+        IRepository<TDocument, TType> repository,
+        TransactionContext transactionContext)
+        where TDocument : DocumentBase<TType>
+    {
+        transactionContext.SetLogger(_logger);
+
+        using var session = transactionContext.Session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, transactionContext.CancellationToken);
+
+        try
+        {
+            var options = transactionContext.TransactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            session.StartTransaction(options);
+
+            await taskOperation(repository, transactionContext);
+
+            await session.CommitTransactionAsync(transactionContext.CancellationToken);
+
+        }
+        catch (NotSupportedException)
+        {
+            throw;
+        }
+
+        catch (Exception exception)
+        {
+            await session.AbortTransactionAsync(transactionContext.CancellationToken);
+            if (transactionContext.Logger.IsEnabled(LogLevel.Information))
+            {
+                transactionContext.Logger.LogError("[TRANSACTION ROLLBACK] {Id} {Message}", session.ServerSession.Id, exception.Message);
+            }
+
+            throw;
+        }
+    }
+
+    #region Disposable
 
     public void Dispose()
     {
@@ -144,4 +286,5 @@ public sealed class UnitOfWork : IUnitOfWork
         _disposed = true;
     }
 
+    #endregion
 }

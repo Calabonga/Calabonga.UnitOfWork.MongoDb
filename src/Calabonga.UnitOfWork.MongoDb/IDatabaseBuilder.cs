@@ -3,7 +3,7 @@
 namespace Calabonga.UnitOfWork.MongoDb;
 
 /// <summary>
-/// // Calabonga: update summary (2023-01-02 11:54 IMongoDbBuilder)
+/// Database builder from database settings
 /// </summary>
 public interface IDatabaseBuilder
 {

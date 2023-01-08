@@ -53,5 +53,5 @@ public interface IDatabaseSettings
     /// <summary>
     /// Enable/Disable TLS
     /// </summary>
-    bool UseTls { get; set; }
+    bool UseTls { get; }
 }

@@ -1,9 +1,9 @@
 ﻿namespace Calabonga.UnitOfWork.MongoDb;
 
 /// <summary>
-/// // Calabonga: update summary (2023-01-02 11:53 IMongoDbSettings)
+/// Database settings for MongoDb connection
 /// </summary>
-public class DatabaseSettings : IDatabaseSettings
+public sealed class DatabaseSettings : IDatabaseSettings
 {
     /// <summary>
     /// Overrides all others settings. Just returns new MongoClient with this connection string
@@ -57,7 +57,7 @@ public class DatabaseSettings : IDatabaseSettings
 }
 
 /// <summary>
-/// // Calabonga: update summary (2023-01-04 03:55 DatabaseSettings)
+/// Credential data for connection
 /// </summary>
 public class CredentialSettings
 {
