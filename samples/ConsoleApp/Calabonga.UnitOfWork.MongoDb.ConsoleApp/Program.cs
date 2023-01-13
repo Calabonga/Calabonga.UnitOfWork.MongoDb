@@ -64,11 +64,17 @@ try
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
-    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, cancellationTokenSource.Token, session);
-    await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
-    await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
-    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
-    await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync5, TransactionContext.Default);
+    // Creating/Print/Delete documents
+    //await DocumentHelper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
+    //await DocumentHelper.PrintDocuments(100, true, repository, logger, cancellationTokenSource.Token);
+    //await DocumentHelper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
+
+    // Using transaction
+    // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, cancellationTokenSource.Token, session);
+    // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
+    // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
+    // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync5, TransactionContext.Default);
 
     logger.LogInformation("Done");
 
@@ -78,12 +84,11 @@ catch (Exception exception)
     logger.LogError(exception.GetBaseException().Message);
 }
 
-
 #region Transaction
 
 async Task ProcessDataInTransactionAsync1(IRepository<OrderBase, int> repositoryInTransaction, IClientSessionHandle session, CancellationToken cancellationToken)
 {
-    await repository.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
+    await repositoryInTransaction.Collection.DeleteManyAsync(session, FilterDefinition<OrderBase>.Empty, null, cancellationToken);
 
     var internalOrder1 = DocumentHelper.GetInternal(99);
     await repositoryInTransaction.Collection.InsertOneAsync(session, internalOrder1, null, cancellationToken);
