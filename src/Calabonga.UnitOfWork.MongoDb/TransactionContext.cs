@@ -24,7 +24,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// <summary>
         /// ILogger for intern operation logging
         /// </summary>
-        public ILogger<UnitOfWork> Logger { get; private set; }
+        public ILogger<UnitOfWork> Logger { get; private set; } = default!;
 
         /// <summary>Transaction options.</summary>
         public TransactionOptions? TransactionOptions { get; }
