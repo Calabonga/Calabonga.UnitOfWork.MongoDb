@@ -83,4 +83,17 @@ public static class DocumentHelper
 
         logger.LogInformation("After deleting: {Total}", await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty, null, cancellationToken));
     }
+
+    public static void PrintDocuments(IEnumerable<OrderBase> items, ILogger logger)
+    {
+        foreach (var item in items)
+        {
+            logger.LogInformation(item.ToString());
+        }
+    }
+
+    public static void PrintDocuments(IQueryable<OrderBase> items, ILogger logger)
+    {
+        PrintDocuments(items.AsEnumerable(), logger);
+    }
 }

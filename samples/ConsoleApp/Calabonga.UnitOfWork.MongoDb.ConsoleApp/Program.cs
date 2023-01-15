@@ -1,9 +1,7 @@
-﻿using Calabonga.UnitOfWork.MongoDb;
-using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
+﻿using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using Serilog;
 using System.Text.Json;
 
@@ -64,20 +62,44 @@ try
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
+    // --------------------------------------------
     // Creating/Print/Delete documents
-    //await DocumentHelper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
-    //await DocumentHelper.PrintDocuments(100, true, repository, logger, cancellationTokenSource.Token);
-    //await DocumentHelper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
+    // --------------------------------------------
+    // await DocumentHelper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
+    // await DocumentHelper.PrintDocuments(100, true, repository, logger, cancellationTokenSource.Token);
+    // await DocumentHelper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
 
+    // --------------------------------------------
     // Using transaction
+    // --------------------------------------------
     // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, cancellationTokenSource.Token, session);
     // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
     // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
     // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync4, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));
     // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync5, TransactionContext.Default);
 
-    logger.LogInformation("Done");
+    // --------------------------------------------
+    // LINQ predicates 
+    // --------------------------------------------
+    // var predicate = PredicateBuilder.True<OrderBase>();
+    // predicate = predicate.And(x => x.Title.StartsWith("Title 29"));
+    // predicate = predicate.Or(x => x.State == DocumentState.Draft);
+    // var items1 = repository.Collection.AsQueryable().AsExtendable().Where(predicate);
 
+    // var filterBuilder = Builders<OrderBase>.Filter;
+    // var filter = filterBuilder.Regex(x => x.Title, new Regex("^" + "Title 29", RegexOptions.IgnoreCase));
+    // filter &= filterBuilder.Eq(x => x.State, DocumentState.Draft);
+
+    // var cursor = await repository.Collection.FindAsync(filter, null, cancellationTokenSource.Token);
+    // var items2 = await cursor.ToListAsync(cancellationTokenSource.Token);
+
+    // DocumentHelper.PrintDocuments(items1, logger);
+    // DocumentHelper.PrintDocuments(items2, logger);
+
+    // logger.LogInformation("Total1: {0}", items1.Count());
+    // logger.LogInformation("Total2: {0}", items2.Count());
+
+    logger.LogInformation("Done");
 }
 catch (Exception exception)
 {
