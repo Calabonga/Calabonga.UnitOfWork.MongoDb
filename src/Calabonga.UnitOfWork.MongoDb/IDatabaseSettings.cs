@@ -23,7 +23,7 @@ public interface IDatabaseSettings
     /// <summary>
     /// Replica Set Name
     /// </summary>
-    string ReplicaSetName { get; }
+    string? ReplicaSetName { get; }
 
     /// <summary>
     /// MongoDb port. Default is 27017

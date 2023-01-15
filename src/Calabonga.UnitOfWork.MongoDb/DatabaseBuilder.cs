@@ -31,7 +31,7 @@ public sealed class DatabaseBuilder : IDatabaseBuilder
     /// <summary>
     /// MongoClient
     /// </summary>
-    public IMongoClient Client { get; private set; }
+    public IMongoClient Client { get; private set; } = default!;
 
     /// <summary>
     /// MongoDb database settings
