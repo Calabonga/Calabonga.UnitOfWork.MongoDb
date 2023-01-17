@@ -21,9 +21,22 @@ public abstract class OrderBase : DocumentBase<int>
     [BsonRepresentation(BsonType.String)]
     public DocumentState State { get; set; }
 
+    [BsonElement("lastCenter")]
+    [BsonIgnoreIfNull]
+    public string? LastNumber { get; set; }
+    
+    [BsonIgnoreIfNull]
+    [BsonElement("centers")]
+    public string[]? Numbers { get; set; }
+
     protected abstract OrderType OrderType { get; }
 
-    public override string ToString() => $"[{OrderType}] {CreatedAt:G} {Title} {Description} {State}";
+    public override string ToString()
+    {
+        return Numbers != null
+            ? $"[{OrderType}] {CreatedAt:G} {Title} {Description} {LastNumber} {State}  ({string.Join(",", Numbers)})"
+            : $"[{OrderType}] {CreatedAt:G} {Title} {Description} {LastNumber} {State} ";
+    }
 }
 
 [BsonDiscriminator("Internal")]
