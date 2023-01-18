@@ -102,8 +102,12 @@ namespace Calabonga.UnitOfWork.MongoDb
             CancellationToken cancellationToken,
             FindOptions<TDocument>? options = null)
         {
-            var itemsFind = await Collection.FindAsync(filter, options, cancellationToken);
-            return await itemsFind.ToPagedListAsync(pageIndex, pageSize, cancellationToken);
+            var total = await Collection.CountDocumentsAsync(filter, null, cancellationToken);
+            var itemsFind = Collection.Find(filter).ToEnumerable()
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize);
+
+            return itemsFind.ToPagedList((int)total, pageSize, pageIndex);
         }
 
         #region GetSession
@@ -129,6 +133,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         #endregion
 
         #region privates
+
         private string GetInternalName()
         {
             var name = _collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name);
