@@ -9,6 +9,31 @@ namespace Calabonga.UnitOfWork.MongoDb
     /// </summary>
     public static class UnitOfWorkServiceCollectionExtensions
     {
+        /// <summary>
+        /// Registers the unit of work given context as a service in the <see cref="IServiceCollection"/>.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="implementationFactory"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static void AddUnitOfWork(this IServiceCollection services,
+            Func<IServiceProvider, IDatabaseSettings> implementationFactory)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (implementationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(implementationFactory));
+            }
+
+            services.TryAddScoped<IUnitOfWork, UnitOfWork>();
+            services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
+            services.TryAddScoped<ICollectionNameSelector, DefaultCollectionNameSelector>();
+            services.TryAddScoped(typeof(IDatabaseSettings), implementationFactory);
+        }
+
         ///// <summary>
         ///// Registers the unit of work given context as a service in the <see cref="IServiceCollection"/>.
         ///// </summary>
