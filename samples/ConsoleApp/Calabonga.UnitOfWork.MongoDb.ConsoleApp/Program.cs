@@ -1,15 +1,9 @@
-﻿using System.Globalization;
-using System.Runtime.InteropServices;
-using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
+﻿using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using Calabonga.UnitOfWork.MongoDb;
-using MongoDB.Bson;
-using MongoDB.Driver;
 
 #region configuration
 
@@ -73,7 +67,7 @@ try
     // Creating/Print/Delete documents
     // --------------------------------------------
     // await Helper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
-    await Helper.PrintDocuments(100, true, repository, logger, cancellationTokenSource.Token);
+    //await Helper.PrintDocuments(10000, true, repository, logger, cancellationTokenSource.Token);
     // await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
 
     // --------------------------------------------
@@ -113,29 +107,6 @@ try
     // var filterBuilder = Builders<OrderBase>.Filter;
     // var filter = filterBuilder.Regex(x => x.Title, new Regex("^" + "Title 29", RegexOptions.IgnoreCase));
     // filter &= filterBuilder.Eq(x => x.State, DocumentState.Draft);
-
-
-    var projection = Builders<OrderBase>.Projection.Expression(x => new
-    {
-        x.Id,
-        x.CreatedAt,
-        x.Title,
-        x.Description,
-        x.State,
-        Centers = x.Numbers,
-        LastCenter = x.LastNumber,
-        Order = x.LastNumber!.CompareTo("80")
-    });
-
-
-    var items = await repository.Collection.Aggregate()
-        .Match(Builders<OrderBase>.Filter.Empty)
-        .Project(projection)
-        .ToListAsync(cancellationTokenSource.Token);
-
-    var items1 = items.OrderBy(x => x.Order);
-
-    Helper.PrintDocuments(items1, logger);
 
     logger.LogInformation("Done");
 }

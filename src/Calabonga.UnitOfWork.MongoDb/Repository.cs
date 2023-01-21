@@ -12,6 +12,9 @@ namespace Calabonga.UnitOfWork.MongoDb
     public sealed class Repository<TDocument, TType> : IRepository<TDocument, TType>
         where TDocument : DocumentBase<TType>
     {
+        private const string _dataFacetName = "dataFacet";
+        private const string _countFacetName = "countFacet";
+
         private readonly string _entityName;
         private readonly ICollectionNameSelector _collectionNameSelector;
 
@@ -86,28 +89,54 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// <summary>Gets the settings.</summary>
         public MongoCollectionSettings Settings => Collection.Settings;
 
-        /// <summary>
-        /// Returns paged collection of the items
-        /// </summary>
+        /// <summary> Returns paged collection of the items </summary>
+        /// <remarks>Pagination for MongoDB is using AggregateFacet</remarks>
         /// <param name="pageSize"></param>
         /// <param name="filter"></param>
+        /// <param name="sorting"></param>
         /// <param name="cancellationToken"></param>
-        /// <param name="options"></param>
         /// <param name="pageIndex"></param>
         public async Task<IPagedList<TDocument>> GetPagedAsync
         (
             int pageIndex,
             int pageSize,
             FilterDefinition<TDocument> filter,
-            CancellationToken cancellationToken,
-            FindOptions<TDocument>? options = null)
+            SortDefinition<TDocument> sorting,
+            CancellationToken cancellationToken)
         {
-            var total = await Collection.CountDocumentsAsync(filter, null, cancellationToken);
-            var itemsFind = Collection.Find(filter).ToEnumerable()
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize);
+            var countFacet = AggregateFacet.Create(_countFacetName,
+                PipelineDefinition<TDocument, AggregateCountResult>.Create(new[]
+                {
+                    PipelineStageDefinitionBuilder.Count<TDocument>()
+                }));
 
-            return itemsFind.ToPagedList((int)total, pageSize, pageIndex);
+            var dataFacet = AggregateFacet.Create(_dataFacetName,
+                PipelineDefinition<TDocument, TDocument>.Create(new[]
+                {
+                    PipelineStageDefinitionBuilder.Sort(sorting),
+                    PipelineStageDefinitionBuilder.Skip<TDocument>((pageIndex - 1) * pageSize),
+                    PipelineStageDefinitionBuilder.Limit<TDocument>(pageSize),
+                }));
+
+
+            var aggregation = await Collection.Aggregate()
+                .Match(filter)
+                .Facet(countFacet, dataFacet)
+                .ToListAsync(cancellationToken: cancellationToken);
+
+            var count = aggregation.First()
+                .Facets.First(x => x.Name == _countFacetName)
+                .Output<AggregateCountResult>()
+                ?.FirstOrDefault()
+                ?.Count;
+
+            var totalPages = (int)Math.Ceiling((double)count! / pageSize);
+
+            var data = aggregation.First()
+                .Facets.First(x => x.Name == _dataFacetName)
+                .Output<TDocument>();
+
+            return data.ToPagedList(pageIndex, pageSize, totalPages, count);
         }
 
         #region GetSession

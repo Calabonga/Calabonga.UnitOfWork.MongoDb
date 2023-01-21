@@ -12,11 +12,11 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// <summary>
         /// Registers the unit of work given context as a service in the <see cref="IServiceCollection"/>.
         /// </summary>
+        /// <returns>The same service collection so that multiple calls can be chained.</returns>
         /// <param name="services"></param>
         /// <param name="implementationFactory"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public static void AddUnitOfWork(this IServiceCollection services,
-            Func<IServiceProvider, IDatabaseSettings> implementationFactory)
+        public static IServiceCollection AddUnitOfWork(this IServiceCollection services, Func<IServiceProvider, IDatabaseSettings> implementationFactory)
         {
             if (services == null)
             {
@@ -32,6 +32,7 @@ namespace Calabonga.UnitOfWork.MongoDb
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
             services.TryAddScoped<ICollectionNameSelector, DefaultCollectionNameSelector>();
             services.TryAddScoped(typeof(IDatabaseSettings), implementationFactory);
+            return services;
         }
 
         ///// <summary>
@@ -42,7 +43,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         ///// <remarks>
         ///// This method only support one db context, if been called more than once, will throw exception.
         ///// </remarks>
-        public static void AddUnitOfWork(this IServiceCollection services, Action<DatabaseSettings> applyConfiguration)
+        public static IServiceCollection AddUnitOfWork(this IServiceCollection services, Action<DatabaseSettings> applyConfiguration)
         {
             services.TryAddScoped<IUnitOfWork, UnitOfWork>();
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
@@ -52,6 +53,8 @@ namespace Calabonga.UnitOfWork.MongoDb
             applyConfiguration(mongoDbSettings);
 
             services.TryAddScoped<IDatabaseSettings>(_ => mongoDbSettings);
+
+            return services;
         }
 
         ///// <summary>
@@ -62,7 +65,7 @@ namespace Calabonga.UnitOfWork.MongoDb
         ///// <remarks>
         ///// This method only support one db context, if been called more than once, will throw exception.
         ///// </remarks>
-        public static void AddUnitOfWork(this IServiceCollection services, IConfigurationSection configurationSection)
+        public static IServiceCollection AddUnitOfWork(this IServiceCollection services, IConfigurationSection configurationSection)
         {
             services.TryAddScoped<IUnitOfWork, UnitOfWork>();
             services.TryAddScoped<IDatabaseBuilder, DatabaseBuilder>();
@@ -76,6 +79,8 @@ namespace Calabonga.UnitOfWork.MongoDb
             }
 
             services.TryAddScoped<IDatabaseSettings>(_ => mongoDbSettings);
+
+            return services;
         }
     }
 }

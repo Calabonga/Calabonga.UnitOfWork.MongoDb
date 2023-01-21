@@ -19,7 +19,7 @@ public interface IPagedList<T>
     /// <summary>
     /// Gets the total count of the list of type <typeparamref name="T"/>
     /// </summary>
-    int TotalCount { get; }
+    long TotalCount { get; }
 
     /// <summary>
     /// Gets the total pages.
@@ -29,5 +29,5 @@ public interface IPagedList<T>
     /// <summary>
     /// Gets the current page items.
     /// </summary>
-    IList<T> Items { get; }
+    IReadOnlyCollection<T> Items { get; }
 }

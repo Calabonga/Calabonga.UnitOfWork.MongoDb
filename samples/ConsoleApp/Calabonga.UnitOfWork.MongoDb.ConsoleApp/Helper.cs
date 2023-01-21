@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 
@@ -11,20 +10,18 @@ public static class Helper
     public static async Task CreateDocuments(IClientSessionHandle session, IRepository<OrderBase, int> repository,
         ILogger logger, CancellationToken cancellationToken)
     {
-        var internalOrders = GenerateInternalOrders(1);
-        var externalOrders = GenerateExternalOrders(20);
+        const int total = 1_000;
+        var internalOrders = GenerateInternalOrders(1, total);
+        var externalOrders = GenerateExternalOrders(200_001, total);
 
         var both = internalOrders.Union(externalOrders).ToList();
 
-        foreach (var document in both)
-        {
-            await repository.Collection.InsertOneAsync(session, document, null, cancellationToken);
-        }
+        await repository.Collection.InsertManyAsync(session, both, null, cancellationToken);
 
         logger.LogInformation("{Created}", both.Count);
 
-        var internalOrders1 = GenerateInternalOrders(1000, 1000);
-        var externalOrders1 = GenerateExternalOrders(2000, 1000);
+        var internalOrders1 = GenerateInternalOrders(400_000, total);
+        var externalOrders1 = GenerateExternalOrders(600_001, total);
 
         var both2 = internalOrders1.Union(externalOrders1).ToList();
 
@@ -59,16 +56,28 @@ public static class Helper
                 Title = $"Title {x}"
             });
 
-    public static async Task PrintDocuments(int pageSize, bool showItems, IRepository<OrderBase, int> repository,
-        ILogger logger, CancellationToken cancellationToken)
+    public static async Task PrintDocuments
+    (
+        int pageSize,
+        bool showItems,
+        IRepository<OrderBase, int> repository,
+        ILogger logger,
+        CancellationToken cancellationToken)
     {
-        var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty,
-            cancellationToken: cancellationToken);
-
-        for (var i = 0; i < Math.Ceiling(total / (double)pageSize); i++)
+        var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty, cancellationToken: cancellationToken);
+        if (total <= 0)
         {
-            var paged = await repository.GetPagedAsync(i, pageSize, Builders<OrderBase>.Filter.Empty,
+            logger.LogInformation("No items");
+            return;
+        }
+        for (var i = 1; i <= Math.Ceiling(total / (double)pageSize); i++)
+        {
+            var paged = await repository.GetPagedAsync(i,
+                pageSize,
+                Builders<OrderBase>.Filter.Empty,
+                Builders<OrderBase>.Sort.Ascending(x => x.CreatedAt),
                 cancellationToken);
+
             logger.LogInformation("Items.Count {Count}", paged.Items.Count);
             if (!showItems)
             {
