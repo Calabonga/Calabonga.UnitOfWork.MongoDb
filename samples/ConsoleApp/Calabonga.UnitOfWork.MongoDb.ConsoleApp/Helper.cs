@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 
