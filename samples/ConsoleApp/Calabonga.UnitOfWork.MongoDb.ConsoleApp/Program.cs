@@ -1,4 +1,5 @@
-﻿using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
+﻿using Calabonga.UnitOfWork.MongoDb;
+using Calabonga.UnitOfWork.MongoDb.ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -67,7 +68,7 @@ try
     // Creating/Print/Delete documents
     // --------------------------------------------
     // await Helper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
-    //await Helper.PrintDocuments(10000, true, repository, logger, cancellationTokenSource.Token);
+    // await Helper.PrintDocuments(1000, true, repository, logger, cancellationTokenSource.Token);
     // await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
 
     // --------------------------------------------
