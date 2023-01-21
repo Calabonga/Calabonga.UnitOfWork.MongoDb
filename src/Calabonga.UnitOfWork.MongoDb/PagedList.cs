@@ -23,7 +23,7 @@ internal class PagedList<TSource, TResult> : IPagedList<TResult>
     /// Gets the total count.
     /// </summary>
     /// <value>The total count.</value>
-    public int TotalCount { get; }
+    public long TotalCount { get; }
 
     /// <summary>
     /// Gets the total pages.
@@ -35,7 +35,7 @@ internal class PagedList<TSource, TResult> : IPagedList<TResult>
     /// Gets the items.
     /// </summary>
     /// <value>The items.</value>
-    public IList<TResult> Items { get; }
+    public IReadOnlyCollection<TResult> Items { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PagedList{TSource, TResult}" /> class.
@@ -115,7 +115,7 @@ public class PagedList<T> : IPagedList<T>
     /// Gets or sets the total count.
     /// </summary>
     /// <value>The total count.</value>
-    public int TotalCount { get; init; }
+    public long TotalCount { get; init; }
 
     /// <summary>
     /// Gets or sets the total pages.
@@ -127,7 +127,7 @@ public class PagedList<T> : IPagedList<T>
     /// Gets or sets the items.
     /// </summary>
     /// <value>The items.</value>
-    public IList<T> Items { get; init; }
+    public IReadOnlyCollection<T> Items { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PagedList{T}" /> class.
@@ -135,28 +135,15 @@ public class PagedList<T> : IPagedList<T>
     /// <param name="source">The source.</param>
     /// <param name="pageIndex">The index of the page.</param>
     /// <param name="pageSize">The size of the page.</param>
-    internal PagedList(IEnumerable<T> source, int pageIndex, int pageSize)
+    /// <param name="totalPages"></param>
+    /// <param name="count"></param>
+    internal PagedList(IReadOnlyCollection<T> source, int pageIndex, int pageSize, int totalPages, long? count)
     {
-        if (source is IQueryable<T> queryable)
-        {
-            PageIndex = pageIndex;
-            PageSize = pageSize;
-            TotalCount = queryable.Count();
-            TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
-            Items = queryable.Skip((PageIndex) * PageSize).Take(PageSize).ToList();
-        }
-        else
-        {
-            var enumerable = source.ToList();
-            PageIndex = pageIndex;
-            PageSize = pageSize;
-            TotalCount = enumerable.Count;
-            TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
-            Items = enumerable
-                .Skip((PageIndex) * PageSize)
-                .Take(PageSize)
-                .ToList();
-        }
+        PageIndex = pageIndex;
+        PageSize = pageSize;
+        TotalCount = count ?? 0;
+        TotalPages = totalPages;
+        Items = source;
     }
 
     /// <summary>

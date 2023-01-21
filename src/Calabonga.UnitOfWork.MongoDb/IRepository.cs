@@ -28,17 +28,17 @@ public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TT
     #endregion
 
     /// <summary>
-    /// Returns paged collection of the items
+    /// Returns paged collection of the items using AggregateFacet
     /// </summary>
     /// <param name="pageSize"></param>
     /// <param name="filter"></param>
+    /// <param name="sorting"></param>
     /// <param name="cancellationToken"></param>
-    /// <param name="options"></param>
     /// <param name="pageIndex"></param>
     Task<IPagedList<TDocument>> GetPagedAsync(
         int pageIndex,
         int pageSize,
         FilterDefinition<TDocument> filter,
-        CancellationToken cancellationToken,
-        FindOptions<TDocument>? options = null);
+        SortDefinition<TDocument> sorting,
+        CancellationToken cancellationToken);
 }
