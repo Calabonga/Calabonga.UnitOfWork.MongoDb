@@ -310,7 +310,16 @@ async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repository
 
 * [Nuget пакет](https://www.nuget.org/packages/Calabonga.UnitOfWork.MongoDb/)
 * [Статья в блоге](https://www.calabonga.net/blog/post/unit-of-work-for-mongodb)
-* [UnitOfWork для MongoDb на YouTube](https://youtu.be/xqqR7YVZJww)
+
+# YouTube
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=xqqR7YVZJww
+" target="_blank"><img src="http://img.youtube.com/vi/xqqR7YVZJww/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=otVeeM3pS74
+" target="_blank"><img src="http://img.youtube.com/vi/otVeeM3pS74/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 
 # Автор
 
