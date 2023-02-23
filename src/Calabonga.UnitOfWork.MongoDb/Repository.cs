@@ -18,50 +18,71 @@ namespace Calabonga.UnitOfWork.MongoDb
         private readonly string _entityName;
         private readonly ICollectionNameSelector _collectionNameSelector;
 
-        public Repository(IDatabaseBuilder databaseBuilder)
+        /// <summary>
+        /// Returns instance of new <see cref="IRepository{TDocument,TType}"/>
+        /// </summary>
+        /// <param name="databaseBuilder"></param>
+        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
+        /// <param name="readConcern">default is ReadConcern.Local</param>
+        /// <param name="readPreference">default is ReadPreference.Primary</param>
+        public Repository(IDatabaseBuilder databaseBuilder,
+            WriteConcern? writeConcern = null,
+            ReadConcern? readConcern = null,
+            ReadPreference? readPreference = null)
         {
             _collectionNameSelector = databaseBuilder.CollectionNameSelector;
             _entityName = SetDefaultName();
-            Collection = GetOrCreateCollection(databaseBuilder);
+            Collection = GetOrCreateCollection(databaseBuilder, writeConcern, readConcern, readPreference);
         }
 
         #region base protected
 
         /// <summary>
-        /// Коллекция документов
+        /// MongoDb collection (<see cref="IMongoCollection{TDocument}"/>
         /// </summary>
         public IMongoCollection<TDocument> Collection { get; }
 
         /// <summary>
-        /// Возвращает коллекцию другого типа
+        /// Returns new instance of <see cref="IMongoCollection{TDocument}"/>
         /// </summary>
-        /// <typeparam name="T">тип коллекции</typeparam>
-        /// <param name="name">наименование коллекции в MongoDb</param>
-        /// <returns>коллекция MongoDb</returns>
-        private IMongoCollection<T> GetCollection<T>(string name) =>
-            Collection.Database.GetCollection<T>(name)
-                .WithWriteConcern(WriteConcern.WMajority)
-                .WithReadConcern(ReadConcern.Local)
-                .WithReadPreference(ReadPreference.Primary);
+        /// <typeparam name="T">type of collection</typeparam>
+        /// <param name="name">collection name in MongoDb</param>
+        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
+        /// <param name="readConcern">default is ReadConcern.Local</param>
+        /// <param name="readPreference">default is ReadPreference.Primary</param>
+        /// <returns>MongoDb collection</returns>
+        private IMongoCollection<T> GetCollection<T>(string name,
+            WriteConcern? writeConcern = null,
+            ReadConcern? readConcern = null,
+            ReadPreference? readPreference = null)
+            => Collection.Database.GetCollection<T>(name)
+                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
+                .WithReadConcern(readConcern ?? ReadConcern.Local)
+                .WithReadPreference(readPreference ?? ReadPreference.Primary);
 
         /// <summary>
         /// Returns collection of items (getting already exists or create before and return)
         /// </summary>
         /// <param name="databaseBuilder"></param>
-        /// <returns>возвращает коллекцию MongoDb</returns>
-        private IMongoCollection<TDocument> GetOrCreateCollection(IDatabaseBuilder databaseBuilder)
+        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
+        /// <param name="readConcern">default is ReadConcern.Local</param>
+        /// <param name="readPreference">default is ReadPreference.Primary</param>
+        /// <returns>MongoDb collection</returns>
+        private IMongoCollection<TDocument> GetOrCreateCollection(IDatabaseBuilder databaseBuilder,
+            WriteConcern? writeConcern = null,
+            ReadConcern? readConcern = null,
+            ReadPreference? readPreference = null)
         {
             var mongoDb = databaseBuilder.Build();
-
             if (mongoDb.GetCollection<BsonDocument>(GetInternalName()) == null)
             {
                 mongoDb.CreateCollection(_entityName);
             }
 
             return mongoDb.GetCollection<TDocument>(_entityName)
-                .WithWriteConcern(WriteConcern.WMajority)
-                .WithReadConcern(ReadConcern.Local)
-                .WithReadPreference(ReadPreference.Primary);
+                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
+                .WithReadConcern(readConcern ?? ReadConcern.Local)
+                .WithReadPreference(readPreference ?? ReadPreference.Primary);
         }
 
 
@@ -142,20 +163,18 @@ namespace Calabonga.UnitOfWork.MongoDb
         #region GetSession
 
         /// <summary>
-        /// Создает транзакцию и возвращает ее
+        /// Creates and return <see cref="IClientSessionHandle"/> (session object)
         /// </summary>
         /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
-        /// <returns>транзакцию для Write-операций</returns>
         private IClientSessionHandle GetSession(CancellationToken cancellationToken = default, ClientSessionOptions? options = null)
             => Collection.Database.Client.StartSession(options, cancellationToken);
 
         /// <summary>
-        /// Создает транзакцию и возвращает ее
+        /// Creates and return <see cref="IClientSessionHandle"/> (session object)
         /// </summary>
         /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
-        /// <returns>транзакцию для Write-операций</returns>
         private Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken = default, ClientSessionOptions? options = null)
             => Collection.Database.Client.StartSessionAsync(options, cancellationToken);
 
