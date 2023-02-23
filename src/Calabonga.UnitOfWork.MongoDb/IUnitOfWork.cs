@@ -19,7 +19,11 @@ public interface IUnitOfWork : IDisposable
     /// <typeparam name="TDocument"></typeparam>
     /// <typeparam name="TType"></typeparam>
     /// <returns>MongoDb Collection wrapper as repository</returns>
-    IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>;
+    IRepository<TDocument, TType> GetRepository<TDocument, TType>(WriteConcern? writeConcern = null,
+        ReadConcern? readConcern = null,
+        ReadPreference? readPreference = null)
+        where TDocument
+        : DocumentBase<TType>;
 
     /// <summary>
     /// Returns session from current client collection <see cref="IMongoClient"/>

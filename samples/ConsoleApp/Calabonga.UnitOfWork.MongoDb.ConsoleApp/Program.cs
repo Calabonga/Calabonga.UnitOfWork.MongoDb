@@ -41,7 +41,11 @@ var container = services.BuildServiceProvider();
 
 var logger = container.GetRequiredService<ILogger<Program>>();
 var unitOfWork = container.GetService<IUnitOfWork>();
-var repository = unitOfWork!.GetRepository<OrderBase, int>();
+var repository = unitOfWork!.GetRepository<OrderBase, int>(
+    //writeConcern: WriteConcern.WMajority,
+    //readConcern: ReadConcern.Local,
+    //ReadPreference.Primary
+    );
 
 logger.LogInformation("Application started with Namespace: {Name}", repository.Collection.CollectionNamespace);
 
@@ -71,9 +75,9 @@ try
     // await Helper.PrintDocuments(1000, true, repository, logger, cancellationTokenSource.Token);
     // await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
 
-    // --------------------------------------------
-    // Using transaction
-    // --------------------------------------------
+    //--------------------------------------------
+    //Using transaction
+    //--------------------------------------------
     // await unitOfWork.UseTransactionAsync<OrderBase, int>(ProcessDataInTransactionAsync1, cancellationTokenSource.Token, session);
     // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync2, repository, cancellationTokenSource.Token, session);
     // await unitOfWork.UseTransactionAsync(ProcessDataInTransactionAsync3, repository, new TransactionContext(new TransactionOptions(), session, cancellationTokenSource.Token));

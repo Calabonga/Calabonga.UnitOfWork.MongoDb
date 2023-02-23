@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Calabonga.UnitOfWork.MongoDb</AssemblyName>
 		<RootNamespace>Calabonga.UnitOfWork.MongoDb</RootNamespace>
-		<Version>1.2.0</Version>
+		<Version>1.3.0</Version>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -14,10 +14,10 @@
 		<Copyright>Calabonga © 2023</Copyright>
 		<Description>Unit of Work implementation for MongoDb</Description>
 		<PackageProjectUrl>https://www.calabonga.net/blog/post/unit-of-work-for-mongodb</PackageProjectUrl>
-		<PackageTags>calabonga pattern unitofwork mongodb repository</PackageTags>
-		<PackageReleaseNotes>Pagination performance for MongoDB has been significantly improved. Now for collection pagination is using AggregateFacet</PackageReleaseNotes>
-		<AssemblyVersion>1.2.0.0</AssemblyVersion>
-		<FileVersion>1.2.0.0</FileVersion>
+		<PackageTags>calabonga pattern unitofwork mongodb repository driver</PackageTags>
+		<PackageReleaseNotes>Now, when you are getting Repository you can choose Read/Write Concern.</PackageReleaseNotes>
+		<AssemblyVersion>1.3.0.0</AssemblyVersion>
+		<FileVersion>1.3.0.0</FileVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>Calabonga.UnitOfWork.MongoDb</PackageId>
 		<Product>Calabonga.UnitOfWork.MongoDb</Product>
@@ -52,7 +52,7 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.0" />
-		<PackageReference Include="MongoDB.Driver" Version="2.18.0" />
+		<PackageReference Include="MongoDB.Driver" Version="2.19.0" />
 	</ItemGroup>
 
 </Project>

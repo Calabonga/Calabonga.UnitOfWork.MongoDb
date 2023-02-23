@@ -5,7 +5,8 @@ namespace Calabonga.UnitOfWork.MongoDb;
 
 /// <summary>
 /// CALABONGA Warning: do not remove sealed
-/// Represents the default implementation of the <see cref="T:IUnitOfWork"/> and <see cref="T:IUnitOfWork{TContext}"/> interface.
+/// Represents the default implementation of the <see cref="T:IUnitOfWork"/>
+/// and <see cref="T:IUnitOfWork{TContext}"/> interface.
 /// </summary>
 public sealed class UnitOfWork : IUnitOfWork
 {
@@ -25,13 +26,21 @@ public sealed class UnitOfWork : IUnitOfWork
     /// </summary>
     /// <typeparam name="TDocument">type of Document</typeparam>
     /// <typeparam name="TType">type of BsonId</typeparam>
-    public IRepository<TDocument, TType> GetRepository<TDocument, TType>() where TDocument : DocumentBase<TType>
+    /// <param name="writeConcern">default </param>
+    /// <param name="readConcern"></param>
+    /// <param name="readPreference"></param>
+    public IRepository<TDocument, TType> GetRepository<TDocument, TType>(
+        WriteConcern? writeConcern = null,
+        ReadConcern? readConcern = null,
+        ReadPreference? readPreference = null)
+        where TDocument
+        : DocumentBase<TType>
     {
         _repositories ??= new Dictionary<Type, object>();
         var type = typeof(TDocument);
         if (!_repositories.ContainsKey(type))
         {
-            _repositories[type] = new Repository<TDocument, TType>(_databaseBuilder);
+            _repositories[type] = new Repository<TDocument, TType>(_databaseBuilder, writeConcern, readConcern, readPreference);
         }
 
         return (IRepository<TDocument, TType>)_repositories[type];
@@ -96,7 +105,11 @@ public sealed class UnitOfWork : IUnitOfWork
         try
         {
             var repository = GetRepository<TDocument, TType>();
-            var options = transactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            var options = transactionOptions ?? new TransactionOptions(
+                readPreference: ReadPreference.Primary,
+                readConcern: ReadConcern.Snapshot,
+                writeConcern: WriteConcern.WMajority);
+
             session1.StartTransaction(options);
 
             await taskOperation(repository, session1, cancellationToken);
@@ -141,7 +154,12 @@ public sealed class UnitOfWork : IUnitOfWork
 
         try
         {
-            var options = transactionContext.TransactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            var options = transactionContext.TransactionOptions ??
+                          new TransactionOptions(
+                              readPreference: ReadPreference.Primary,
+                              readConcern: ReadConcern.Snapshot,
+                              writeConcern: WriteConcern.WMajority);
+
             session.StartTransaction(options);
 
             await taskOperation(repository, transactionContext);
@@ -188,7 +206,11 @@ public sealed class UnitOfWork : IUnitOfWork
 
         try
         {
-            var options = transactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            var options = transactionOptions ?? new TransactionOptions(
+                readPreference: ReadPreference.Primary,
+                readConcern: ReadConcern.Snapshot,
+                writeConcern: WriteConcern.WMajority);
+
             session1.StartTransaction(options);
 
             await taskOperation(repository, session1, cancellationToken);
@@ -235,7 +257,11 @@ public sealed class UnitOfWork : IUnitOfWork
 
         try
         {
-            var options = transactionContext.TransactionOptions ?? new TransactionOptions(readPreference: ReadPreference.Primary, readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
+            var options = transactionContext.TransactionOptions ?? new TransactionOptions(
+                readPreference: ReadPreference.Primary,
+                readConcern: ReadConcern.Snapshot,
+                writeConcern: WriteConcern.WMajority);
+
             session.StartTransaction(options);
 
             await taskOperation(repository, transactionContext);
