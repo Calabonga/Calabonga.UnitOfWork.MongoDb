@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson.Serialization;
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb;
@@ -41,4 +42,10 @@ public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TT
         FilterDefinition<TDocument> filter,
         SortDefinition<TDocument> sorting,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Save data about request to <see cref="ILogger{TCategoryName}"/> as DEBUG <see cref="LogLevel"/> 
+    /// </summary>
+    /// <param name="requestId"></param>
+    void LogRequest(string requestId);
 }

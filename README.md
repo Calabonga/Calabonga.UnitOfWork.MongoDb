@@ -300,7 +300,47 @@ async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repository
     throw new ApplicationException("EXCEPTION! BANG!");
 }
 ```
+
 Настоятельно рекомендую ознакомиться с тем, как используются методы вызова CRUD операций внутри каждого из методов. Обратите внимание на то, что обязательно использование *session* для вызова операций на операции *Insert/Update/Delete*. В противном случае, при ошибке или исключении отмены операции не произойдет.
+
+## Профилировщик (Profiler)
+
+
+Чтобы включить профилировки (profiler) перед запросом выполните команду:
+
+``` csharp
+unitOfWork.EnableProfiler();
+```
+
+Чтобы выключить профилировки (profiler) после запроса выполните команду:
+
+``` csharp
+unitOfWork.DisableProfiler();
+```
+
+Для отладки запросов, проверки нагрузки и определения наличия индексов MongoDb можно в режиме отладки включить профилировщик ваших запросов. Профилировщик даст возможность логировать все запросы в MongoDb. Вы можете посмотреть их в своей БД в коллекции `system.profile`.
+
+``` JavaScript
+
+// можно без фильтров, тогда увидите всё, что для вас собрал профилировщик
+db.system.profile().find()
+
+```
+
+Отладочную информацию можно также записать в `ILogger`. Для этого надо в опциях запроса в комментарии указать уникальный идентификатор запроса:
+
+``` csharp
+var options1 = new InsertManyOptions { Comment = "07be0e36-f1c3-f6a7-4e52-5333eb32e00e" };
+await repository.Collection.InsertManyAsync(session, both, options1, cancellationToken);
+
+repository.LogRequest("07be0e36-f1c3-f6a7-4e52-5333eb32e00e");
+```
+А после этого запроса выполнить команду `LogRequest`.
+
+>Внимание!!!
+>Профилировщик потребляет значительные ресурсы! Не используйте профилирование, если нет потребности в анализе данных и производительности.
+>Не забудьте отключить профилировщик для использования на PRODUCTION!!!
+>
 
 ## Комментарии, пожелания, замечания
 
@@ -314,11 +354,11 @@ async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repository
 # YouTube
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=xqqR7YVZJww
-" target="_blank"><img src="http://img.youtube.com/vi/xqqR7YVZJww/0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/xqqR7YVZJww/0.jpg"
 alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=otVeeM3pS74
-" target="_blank"><img src="http://img.youtube.com/vi/otVeeM3pS74/0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/otVeeM3pS74/0.jpg"
 alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 
 # Автор

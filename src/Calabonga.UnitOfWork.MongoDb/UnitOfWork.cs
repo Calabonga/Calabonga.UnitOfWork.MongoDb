@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb;
@@ -12,7 +13,9 @@ public sealed class UnitOfWork : IUnitOfWork
 {
     private readonly ILogger<UnitOfWork> _logger;
     private readonly IDatabaseBuilder _databaseBuilder;
+    private IMongoDatabase? _mongoDatabase;
     private bool _disposed;
+    private bool _isProfilerEnabled;
     private Dictionary<Type, object>? _repositories;
 
     public UnitOfWork(ILogger<UnitOfWork> logger, IDatabaseBuilder databaseBuilder)
@@ -40,7 +43,7 @@ public sealed class UnitOfWork : IUnitOfWork
         var type = typeof(TDocument);
         if (!_repositories.ContainsKey(type))
         {
-            _repositories[type] = new Repository<TDocument, TType>(_databaseBuilder, writeConcern, readConcern, readPreference);
+            _repositories[type] = new Repository<TDocument, TType>(_databaseBuilder, _logger, writeConcern, readConcern, readPreference);
         }
 
         return (IRepository<TDocument, TType>)_repositories[type];
@@ -51,12 +54,8 @@ public sealed class UnitOfWork : IUnitOfWork
     /// </summary>
     public void EnsureReplicationSetReady()
     {
-        if (_databaseBuilder.Client == null)
-        {
-            _databaseBuilder.Build();
-        }
-
-        _databaseBuilder.Client!.EnsureReplicationSetReady();
+        _mongoDatabase ??= _databaseBuilder.Build();
+        _mongoDatabase.Client!.EnsureReplicationSetReady();
     }
 
     /// <summary>
@@ -64,11 +63,8 @@ public sealed class UnitOfWork : IUnitOfWork
     /// </summary>
     public IClientSessionHandle GetSession()
     {
-        if (_databaseBuilder.Client == null)
-        {
-            _databaseBuilder.Build();
-        }
-        return _databaseBuilder.Client!.StartSession();
+        _mongoDatabase ??= _databaseBuilder.Build();
+        return _mongoDatabase.Client!.StartSession();
     }
 
     /// <summary>
@@ -77,11 +73,8 @@ public sealed class UnitOfWork : IUnitOfWork
     /// <param name="cancellationToken"></param>
     public Task<IClientSessionHandle> GetSessionAsync(CancellationToken cancellationToken)
     {
-        if (_databaseBuilder.Client == null)
-        {
-            _databaseBuilder.Build();
-        }
-        return _databaseBuilder.Client!.StartSessionAsync(null, cancellationToken);
+        _mongoDatabase ??= _databaseBuilder.Build();
+        return _mongoDatabase.Client!.StartSessionAsync(null, cancellationToken);
     }
 
     /// <summary>
@@ -100,7 +93,7 @@ public sealed class UnitOfWork : IUnitOfWork
         IClientSessionHandle? session,
         TransactionOptions? transactionOptions = null) where TDocument : DocumentBase<TType>
     {
-        using var session1 = session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, cancellationToken);
+        using var session1 = session ?? await _mongoDatabase!.Client.StartSessionAsync(null, cancellationToken);
 
         try
         {
@@ -202,7 +195,7 @@ public sealed class UnitOfWork : IUnitOfWork
         IClientSessionHandle? session,
         TransactionOptions? transactionOptions = null) where TDocument : DocumentBase<TType>
     {
-        using var session1 = session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, cancellationToken);
+        using var session1 = session ?? await _mongoDatabase!.Client.StartSessionAsync(null, cancellationToken);
 
         try
         {
@@ -253,7 +246,7 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         transactionContext.SetLogger(_logger);
 
-        using var session = transactionContext.Session ?? await _databaseBuilder.Build().Client.StartSessionAsync(null, transactionContext.CancellationToken);
+        using var session = transactionContext.Session ?? await _mongoDatabase!.Client.StartSessionAsync(null, transactionContext.CancellationToken);
 
         try
         {
@@ -284,6 +277,42 @@ public sealed class UnitOfWork : IUnitOfWork
 
             throw;
         }
+    }
+
+    /// <summary>Enables profiler for MongoDb. By default use Log Level 2. This is mean that's all queries and command are logging.</summary>
+    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
+    public void EnableProfiler()
+    {
+        if (_isProfilerEnabled)
+        {
+            return;
+        }
+        var profileCommand = new BsonDocument("profile", 2);
+        var result = _mongoDatabase!.RunCommand<BsonDocument>(profileCommand);
+        if (result.GetValue("ok") != 1)
+        {
+            throw new InvalidOperationException("Cannot enable profiler on MongoDb");
+        }
+
+        _isProfilerEnabled = true;
+    }
+
+    /// <summary> Disables profiler for MongoDb. </summary>
+    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
+    public void DisableProfiler()
+    {
+        if (!_isProfilerEnabled)
+        {
+            return;
+        }
+        var profileCommand = new BsonDocument("profile", 0);
+        var result = _mongoDatabase!.RunCommand<BsonDocument>(profileCommand);
+        if (result.GetValue("ok") != 1)
+        {
+            throw new InvalidOperationException("Cannot disable profiler on MongoDb");
+        }
+
+        _isProfilerEnabled = false;
     }
 
     #region Disposable

@@ -113,7 +113,7 @@
                 <pager class="my-3"
                asp-paged-list-page-size="@Model.Data.PageSize"
                asp-paged-list-page-index="@Model.Data.PageIndex"
-               asp-paged-list-total-pages="@Model.Data.TotalCount"
+               asp-paged-list-total-pages="(int)@Model.Data.TotalCount"
                asp-paged-list-url="index"
                asp-route-parameter="pageIndex"></pager>
             </div>

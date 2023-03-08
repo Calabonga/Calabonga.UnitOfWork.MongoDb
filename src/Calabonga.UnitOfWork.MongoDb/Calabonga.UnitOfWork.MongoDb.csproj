@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Calabonga.UnitOfWork.MongoDb</AssemblyName>
 		<RootNamespace>Calabonga.UnitOfWork.MongoDb</RootNamespace>
-		<Version>1.3.0</Version>
+		<Version>1.4.0</Version>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -15,9 +15,9 @@
 		<Description>Unit of Work implementation for MongoDb</Description>
 		<PackageProjectUrl>https://www.calabonga.net/blog/post/unit-of-work-for-mongodb</PackageProjectUrl>
 		<PackageTags>calabonga pattern unitofwork mongodb repository driver</PackageTags>
-		<PackageReleaseNotes>Now, when you are getting Repository you can choose Read/Write Concern.</PackageReleaseNotes>
-		<AssemblyVersion>1.3.0.0</AssemblyVersion>
-		<FileVersion>1.3.0.0</FileVersion>
+		<PackageReleaseNotes>Profiler enable/disable management added. Logging data from profiler to ILogger added.</PackageReleaseNotes>
+		<AssemblyVersion>1.4.0.0</AssemblyVersion>
+		<FileVersion>1.4.0.0</FileVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>Calabonga.UnitOfWork.MongoDb</PackageId>
 		<Product>Calabonga.UnitOfWork.MongoDb</Product>
