@@ -27,7 +27,10 @@ namespace WebApplicationWithMongo.Pages
             _unitOfWork.EnsureReplicationSetReady();
 
             var repository = _unitOfWork.GetRepository<Order, int>();
-            Data = await repository.GetPagedAsync(pageIndex - 1, pageSize, FilterDefinition<Order>.Empty, HttpContext.RequestAborted);
+            Data = await repository.GetPagedAsync(pageIndex - 1, pageSize,
+                FilterDefinition<Order>.Empty,
+                Builders<Order>.Sort.Ascending(x => x.Number), HttpContext.RequestAborted);
+
             return Page();
         }
 

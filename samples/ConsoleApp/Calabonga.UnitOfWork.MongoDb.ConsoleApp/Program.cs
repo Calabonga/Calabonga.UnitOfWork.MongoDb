@@ -68,12 +68,18 @@ try
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
+    // Enable MongoDb profiler
+    unitOfWork.EnableProfiler();
+
     // --------------------------------------------
     // Creating/Print/Delete documents
     // --------------------------------------------
-    // await Helper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
-    // await Helper.PrintDocuments(1000, true, repository, logger, cancellationTokenSource.Token);
-    // await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
+    await Helper.CreateDocuments(session, repository, logger, cancellationTokenSource.Token);
+    await Helper.PrintDocuments(1000, true, repository, logger, cancellationTokenSource.Token);
+    await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
+
+    // Disable MongoDb profiler
+    unitOfWork.DisableProfiler();
 
     //--------------------------------------------
     //Using transaction

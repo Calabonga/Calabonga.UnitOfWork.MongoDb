@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
@@ -12,6 +13,10 @@ namespace Calabonga.UnitOfWork.MongoDb
     public sealed class Repository<TDocument, TType> : IRepository<TDocument, TType>
         where TDocument : DocumentBase<TType>
     {
+        private const string ProfileCollection = "system.profile";
+        private const string ProfileMarker = "command.comment";
+
+        private readonly ILogger<UnitOfWork> _logger;
         private const string _dataFacetName = "dataFacet";
         private const string _countFacetName = "countFacet";
 
@@ -22,78 +27,26 @@ namespace Calabonga.UnitOfWork.MongoDb
         /// Returns instance of new <see cref="IRepository{TDocument,TType}"/>
         /// </summary>
         /// <param name="databaseBuilder"></param>
+        /// <param name="logger"></param>
         /// <param name="writeConcern">default is WriteConcern.WMajority</param>
         /// <param name="readConcern">default is ReadConcern.Local</param>
         /// <param name="readPreference">default is ReadPreference.Primary</param>
         public Repository(IDatabaseBuilder databaseBuilder,
+            ILogger<UnitOfWork> logger,
             WriteConcern? writeConcern = null,
             ReadConcern? readConcern = null,
             ReadPreference? readPreference = null)
         {
+            _logger = logger;
             _collectionNameSelector = databaseBuilder.CollectionNameSelector;
             _entityName = SetDefaultName();
             Collection = GetOrCreateCollection(databaseBuilder, writeConcern, readConcern, readPreference);
         }
 
-        #region base protected
-
         /// <summary>
         /// MongoDb collection (<see cref="IMongoCollection{TDocument}"/>
         /// </summary>
         public IMongoCollection<TDocument> Collection { get; }
-
-        /// <summary>
-        /// Returns new instance of <see cref="IMongoCollection{TDocument}"/>
-        /// </summary>
-        /// <typeparam name="T">type of collection</typeparam>
-        /// <param name="name">collection name in MongoDb</param>
-        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
-        /// <param name="readConcern">default is ReadConcern.Local</param>
-        /// <param name="readPreference">default is ReadPreference.Primary</param>
-        /// <returns>MongoDb collection</returns>
-        private IMongoCollection<T> GetCollection<T>(string name,
-            WriteConcern? writeConcern = null,
-            ReadConcern? readConcern = null,
-            ReadPreference? readPreference = null)
-            => Collection.Database.GetCollection<T>(name)
-                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
-                .WithReadConcern(readConcern ?? ReadConcern.Local)
-                .WithReadPreference(readPreference ?? ReadPreference.Primary);
-
-        /// <summary>
-        /// Returns collection of items (getting already exists or create before and return)
-        /// </summary>
-        /// <param name="databaseBuilder"></param>
-        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
-        /// <param name="readConcern">default is ReadConcern.Local</param>
-        /// <param name="readPreference">default is ReadPreference.Primary</param>
-        /// <returns>MongoDb collection</returns>
-        private IMongoCollection<TDocument> GetOrCreateCollection(IDatabaseBuilder databaseBuilder,
-            WriteConcern? writeConcern = null,
-            ReadConcern? readConcern = null,
-            ReadPreference? readPreference = null)
-        {
-            var mongoDb = databaseBuilder.Build();
-            if (mongoDb.GetCollection<BsonDocument>(GetInternalName()) == null)
-            {
-                mongoDb.CreateCollection(_entityName);
-            }
-
-            return mongoDb.GetCollection<TDocument>(_entityName)
-                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
-                .WithReadConcern(readConcern ?? ReadConcern.Local)
-                .WithReadPreference(readPreference ?? ReadPreference.Primary);
-        }
-
-
-        /// <summary>
-        /// Sets default name for entity name of the repository
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        private string SetDefaultName() => GetInternalName();
-
-        #endregion
 
         /// <summary>Gets the namespace of the collection.</summary>
         public CollectionNamespace CollectionNamespace => Collection.CollectionNamespace;
@@ -160,6 +113,35 @@ namespace Calabonga.UnitOfWork.MongoDb
             return data.ToPagedList(pageIndex, pageSize, totalPages, count);
         }
 
+        /// <summary>
+        /// Save data about request to <see cref="ILogger{TCategoryName}"/> as DEBUG <see cref="LogLevel"/>.
+        /// </summary>
+        /// <remarks>
+        /// Before using this method you should enable profiler <see cref="IUnitOfWork.EnableProfiler"/>.
+        /// Do not forget disable profiler for PRODUCTION!
+        /// </remarks>
+        /// <param name="requestId"></param>
+        public void LogRequest(string requestId)
+        {
+            var collection = GetCollection<BsonDocument>(ProfileCollection, readPreference: ReadPreference.Primary);
+            var doc = collection.Find(new BsonDocument(ProfileMarker, requestId));
+            if (doc == null)
+            {
+                return;
+            }
+
+            var s = doc.FirstOrDefault();
+            var command = s.GetValue("command").ToJson();
+            var db = s.GetValue("ns");
+            var total = s.GetValue("millis");
+            s.TryGetValue("planSummary", out var plan);
+            var type = s.GetValue("op");
+            var length = s.GetValue("responseLength");
+            _logger.LogDebug("[{Db}] {Command}, plan:{Plan}, type: {Type}, length: {Length} (bytes), duration: {Total} (ms)", db, command, plan ?? "N/A", type, length, total);
+        }
+
+        #region privates
+
         #region GetSession
 
         /// <summary>
@@ -180,8 +162,6 @@ namespace Calabonga.UnitOfWork.MongoDb
 
         #endregion
 
-        #region privates
-
         private string GetInternalName()
         {
             var name = _collectionNameSelector.GetMongoCollectionName(typeof(TDocument).Name);
@@ -189,6 +169,57 @@ namespace Calabonga.UnitOfWork.MongoDb
                 ? throw new UnitOfWorkArgumentNullException($"Cannot read type name from entity in ICllectionNameSelector.GetMongoCollectionName. Argument is NULL: {nameof(name)}")
                 : name;
         }
+
+        /// <summary>
+        /// Returns new instance of <see cref="IMongoCollection{TDocument}"/>
+        /// </summary>
+        /// <typeparam name="T">type of collection</typeparam>
+        /// <param name="name">collection name in MongoDb</param>
+        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
+        /// <param name="readConcern">default is ReadConcern.Local</param>
+        /// <param name="readPreference">default is ReadPreference.Primary</param>
+        /// <returns>MongoDb collection</returns>
+        private IMongoCollection<T> GetCollection<T>(string name,
+            WriteConcern? writeConcern = null,
+            ReadConcern? readConcern = null,
+            ReadPreference? readPreference = null)
+            => Collection.Database.GetCollection<T>(name)
+                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
+                .WithReadConcern(readConcern ?? ReadConcern.Local)
+                .WithReadPreference(readPreference ?? ReadPreference.Primary);
+
+        /// <summary>
+        /// Returns collection of items (getting already exists or create before and return)
+        /// </summary>
+        /// <param name="databaseBuilder"></param>
+        /// <param name="writeConcern">default is WriteConcern.WMajority</param>
+        /// <param name="readConcern">default is ReadConcern.Local</param>
+        /// <param name="readPreference">default is ReadPreference.Primary</param>
+        /// <returns>MongoDb collection</returns>
+        private IMongoCollection<TDocument> GetOrCreateCollection(IDatabaseBuilder databaseBuilder,
+            WriteConcern? writeConcern = null,
+            ReadConcern? readConcern = null,
+            ReadPreference? readPreference = null)
+        {
+            var mongoDb = databaseBuilder.Build();
+            if (mongoDb.GetCollection<BsonDocument>(GetInternalName()) == null)
+            {
+                mongoDb.CreateCollection(_entityName);
+            }
+
+            return mongoDb.GetCollection<TDocument>(_entityName)
+                .WithWriteConcern(writeConcern ?? WriteConcern.WMajority)
+                .WithReadConcern(readConcern ?? ReadConcern.Local)
+                .WithReadPreference(readPreference ?? ReadPreference.Primary);
+        }
+
+
+        /// <summary>
+        /// Sets default name for entity name of the repository
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        private string SetDefaultName() => GetInternalName();
 
         #endregion
     }
