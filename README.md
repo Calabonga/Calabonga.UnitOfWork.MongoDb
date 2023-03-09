@@ -306,17 +306,14 @@ async Task ProcessDataInTransactionAsync5(IRepository<OrderBase, int> repository
 ## Профилировщик (Profiler)
 
 
-Чтобы включить профилировки (profiler) перед запросом выполните команду:
+Чтобы включить профилировки (profiler) перед запросом или лучше в начале метода где возможно выполнить множество запросов выполните команду:
 
 ``` csharp
-unitOfWork.EnableProfiler();
+// Enable MongoDb profiler
+using var profiler = new MongoDbProfiler(repository, logger);
 ```
 
-Чтобы выключить профилировки (profiler) после запроса выполните команду:
-
-``` csharp
-unitOfWork.DisableProfiler();
-```
+`MongoDbProfiler` отключит профилировщик при выходе из области действия метода, потому что реализует `IDisposable`.
 
 Для отладки запросов, проверки нагрузки и определения наличия индексов MongoDb можно в режиме отладки включить профилировщик ваших запросов. Профилировщик даст возможность логировать все запросы в MongoDb. Вы можете посмотреть их в своей БД в коллекции `system.profile`.
 
@@ -333,7 +330,7 @@ db.system.profile().find()
 var options1 = new InsertManyOptions { Comment = "07be0e36-f1c3-f6a7-4e52-5333eb32e00e" };
 await repository.Collection.InsertManyAsync(session, both, options1, cancellationToken);
 
-repository.LogRequest("07be0e36-f1c3-f6a7-4e52-5333eb32e00e");
+profiler.LogRequest("07be0e36-f1c3-f6a7-4e52-5333eb32e00e");
 ```
 А после этого запроса выполнить команду `LogRequest`.
 
