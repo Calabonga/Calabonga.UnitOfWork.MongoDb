@@ -1,4 +1,5 @@
-    /// <summary>
+/*
+/// <summary>
     /// // Calabonga: update summary (2023-03-09 04:14 MongoDbProfiler)
     /// </summary>
     public class MongoDbProfiler : IDisposable
@@ -83,3 +84,4 @@
             _disposed = true;
         }
     }
+*/
