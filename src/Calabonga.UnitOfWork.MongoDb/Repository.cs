@@ -13,9 +13,6 @@ namespace Calabonga.UnitOfWork.MongoDb
     public sealed class Repository<TDocument, TType> : IRepository<TDocument, TType>
         where TDocument : DocumentBase<TType>
     {
-        private const string ProfileCollection = "system.profile";
-        private const string ProfileMarker = "command.comment";
-
         private readonly ILogger<UnitOfWork> _logger;
         private const string _dataFacetName = "dataFacet";
         private const string _countFacetName = "countFacet";
@@ -111,33 +108,6 @@ namespace Calabonga.UnitOfWork.MongoDb
                 .Output<TDocument>();
 
             return data.ToPagedList(pageIndex, pageSize, totalPages, count);
-        }
-
-        /// <summary>
-        /// Save data about request to <see cref="ILogger{TCategoryName}"/> as DEBUG <see cref="LogLevel"/>.
-        /// </summary>
-        /// <remarks>
-        /// Before using this method you should enable profiler <see cref="IUnitOfWork.EnableProfiler"/>.
-        /// Do not forget disable profiler for PRODUCTION!
-        /// </remarks>
-        /// <param name="requestId"></param>
-        public void LogRequest(string requestId)
-        {
-            var collection = GetCollection<BsonDocument>(ProfileCollection, readPreference: ReadPreference.Primary);
-            var doc = collection.Find(new BsonDocument(ProfileMarker, requestId));
-            if (doc == null)
-            {
-                return;
-            }
-
-            var s = doc.FirstOrDefault();
-            var command = s.GetValue("command").ToJson();
-            var db = s.GetValue("ns");
-            var total = s.GetValue("millis");
-            s.TryGetValue("planSummary", out var plan);
-            var type = s.GetValue("op");
-            var length = s.GetValue("responseLength");
-            _logger.LogDebug("[{Db}] {Command}, plan:{Plan}, type: {Type}, length: {Length} (bytes), duration: {Total} (ms)", db, command, plan ?? "N/A", type, length, total);
         }
 
         #region privates

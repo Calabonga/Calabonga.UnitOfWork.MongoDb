@@ -99,12 +99,5 @@ public interface IUnitOfWork : IDisposable
         IRepository<TDocument, TType> repository,
         TransactionContext transactionContext)
         where TDocument : DocumentBase<TType>;
-
-    /// <summary>Enables profiler for MongoDb. By default use Log Level 2. This is mean that's all queries and command are logging.</summary>
-    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
-    void EnableProfiler();
-
-    /// <summary> Disables profiler for MongoDb. </summary>
-    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
-    void DisableProfiler();
 }
+

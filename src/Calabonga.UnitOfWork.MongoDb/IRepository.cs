@@ -1,15 +1,20 @@
-﻿using Microsoft.Extensions.Logging;
-using MongoDB.Bson.Serialization;
+﻿using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb;
+
+public interface IRepository
+{
+    IMongoDatabase Database { get; }
+}
 
 /// <summary>
 /// Defines the interfaces for generic repository.
 /// </summary>
 /// <typeparam name="TDocument">The type of the entity.</typeparam>
 /// <typeparam name="TType"></typeparam>
-public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TType>
+public interface IRepository<TDocument, TType> : IRepository
+    where TDocument : DocumentBase<TType>
 {
     #region MongoDb base
 
@@ -42,10 +47,4 @@ public interface IRepository<TDocument, TType> where TDocument : DocumentBase<TT
         FilterDefinition<TDocument> filter,
         SortDefinition<TDocument> sorting,
         CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Save data about request to <see cref="ILogger{TCategoryName}"/> as DEBUG <see cref="LogLevel"/> 
-    /// </summary>
-    /// <param name="requestId"></param>
-    void LogRequest(string requestId);
 }

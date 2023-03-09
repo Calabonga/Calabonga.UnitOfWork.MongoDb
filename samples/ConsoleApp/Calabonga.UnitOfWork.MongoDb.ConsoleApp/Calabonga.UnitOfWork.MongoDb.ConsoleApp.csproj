@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Calabonga.UnitOfWork.MongoDb" Version="1.4.0" />
+		<PackageReference Include="Calabonga.UnitOfWork.MongoDb" Version="1.4.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />

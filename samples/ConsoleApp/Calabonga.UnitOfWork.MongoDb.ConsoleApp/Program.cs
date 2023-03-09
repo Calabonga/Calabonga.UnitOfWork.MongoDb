@@ -68,9 +68,6 @@ try
     var cancellationTokenSource = new CancellationTokenSource();
     var session = await unitOfWork.GetSessionAsync(cancellationTokenSource.Token);
 
-    // Enable MongoDb profiler
-    unitOfWork.EnableProfiler();
-
     // --------------------------------------------
     // Creating/Print/Delete documents
     // --------------------------------------------
@@ -79,7 +76,7 @@ try
     await Helper.DeleteDocuments(repository, logger, cancellationTokenSource.Token);
 
     // Disable MongoDb profiler
-    unitOfWork.DisableProfiler();
+
 
     //--------------------------------------------
     //Using transaction

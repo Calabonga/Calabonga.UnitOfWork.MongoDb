@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Calabonga.UnitOfWork.MongoDb;
@@ -15,7 +14,6 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IDatabaseBuilder _databaseBuilder;
     private IMongoDatabase? _mongoDatabase;
     private bool _disposed;
-    private bool _isProfilerEnabled;
     private Dictionary<Type, object>? _repositories;
 
     public UnitOfWork(ILogger<UnitOfWork> logger, IDatabaseBuilder databaseBuilder)
@@ -35,9 +33,7 @@ public sealed class UnitOfWork : IUnitOfWork
     public IRepository<TDocument, TType> GetRepository<TDocument, TType>(
         WriteConcern? writeConcern = null,
         ReadConcern? readConcern = null,
-        ReadPreference? readPreference = null)
-        where TDocument
-        : DocumentBase<TType>
+        ReadPreference? readPreference = null) where TDocument : DocumentBase<TType>
     {
         _repositories ??= new Dictionary<Type, object>();
         var type = typeof(TDocument);
@@ -277,42 +273,6 @@ public sealed class UnitOfWork : IUnitOfWork
 
             throw;
         }
-    }
-
-    /// <summary>Enables profiler for MongoDb. By default use Log Level 2. This is mean that's all queries and command are logging.</summary>
-    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
-    public void EnableProfiler()
-    {
-        if (_isProfilerEnabled)
-        {
-            return;
-        }
-        var profileCommand = new BsonDocument("profile", 2);
-        var result = _mongoDatabase!.RunCommand<BsonDocument>(profileCommand);
-        if (result.GetValue("ok") != 1)
-        {
-            throw new InvalidOperationException("Cannot enable profiler on MongoDb");
-        }
-
-        _isProfilerEnabled = true;
-    }
-
-    /// <summary> Disables profiler for MongoDb. </summary>
-    /// <remarks> Do not forget disable profiler for PRODUCTION! </remarks>
-    public void DisableProfiler()
-    {
-        if (!_isProfilerEnabled)
-        {
-            return;
-        }
-        var profileCommand = new BsonDocument("profile", 0);
-        var result = _mongoDatabase!.RunCommand<BsonDocument>(profileCommand);
-        if (result.GetValue("ok") != 1)
-        {
-            throw new InvalidOperationException("Cannot disable profiler on MongoDb");
-        }
-
-        _isProfilerEnabled = false;
     }
 
     #region Disposable

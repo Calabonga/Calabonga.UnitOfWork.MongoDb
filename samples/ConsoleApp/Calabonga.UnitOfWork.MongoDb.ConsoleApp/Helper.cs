@@ -15,6 +15,9 @@ public static class Helper
         ILogger logger,
         CancellationToken cancellationToken)
     {
+        // Enable MongoDb profiler
+        using var profiler = new MongoDbProfiler(repository, logger);
+
         const int total = 1_000;
         var internalOrders = GenerateInternalOrders(1, total);
         var externalOrders = GenerateExternalOrders(200_001, total);
@@ -24,7 +27,7 @@ public static class Helper
         var options1 = new InsertManyOptions { Comment = "07be0e36-f1c3-f6a7-4e52-5333eb32e00e" };
         await repository.Collection.InsertManyAsync(session, both, options1, cancellationToken);
 
-        repository.LogRequest("07be0e36-f1c3-f6a7-4e52-5333eb32e00e");
+        profiler.LogRequest("07be0e36-f1c3-f6a7-4e52-5333eb32e00e");
 
         logger.LogInformation("{Created}", both.Count);
 
@@ -35,7 +38,7 @@ public static class Helper
 
         var options2 = new InsertManyOptions { Comment = "7cc66511-f47e-5a89-4a94-cb854b432a0b" };
         await repository.Collection.InsertManyAsync(session, both2, options2, cancellationToken);
-        repository.LogRequest("7cc66511-f47e-5a89-4a94-cb854b432a0b");
+        profiler.LogRequest("7cc66511-f47e-5a89-4a94-cb854b432a0b");
 
         logger.LogInformation("{Created}", both2.Count);
     }
@@ -74,9 +77,13 @@ public static class Helper
         ILogger logger,
         CancellationToken cancellationToken)
     {
+        // Enable MongoDb profiler
+        using var profiler = new MongoDbProfiler(repository, logger);
+
         var options1 = new CountOptions { Comment = "07f9c56c-a98a-249c-470c-5e21d807b173" };
         var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty, options1, cancellationToken: cancellationToken);
-        repository.LogRequest("07f9c56c-a98a-249c-470c-5e21d807b173");
+
+        profiler.LogRequest("07f9c56c-a98a-249c-470c-5e21d807b173");
         if (total <= 0)
         {
             logger.LogInformation("No items");
@@ -106,18 +113,21 @@ public static class Helper
     public static async Task DeleteDocuments(IRepository<OrderBase, int> repository, ILogger logger,
         CancellationToken cancellationToken)
     {
+        // Enable MongoDb profiler
+        using var profiler = new MongoDbProfiler(repository, logger);
+
         var options1 = new CountOptions { Comment = "0266e1ef-59bf-2386-45d8-8d41eb74222b" };
         var total = await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty, options1, cancellationToken: cancellationToken);
-        repository.LogRequest("0266e1ef-59bf-2386-45d8-8d41eb74222b");
+        profiler.LogRequest("0266e1ef-59bf-2386-45d8-8d41eb74222b");
         logger.LogInformation("Deleting all {Total}!", total);
 
         var options2 = new DeleteOptions { Comment = "b901c15d-782f-0fb6-4d48-de462a6f3381" };
         await repository.Collection.DeleteManyAsync(FilterDefinition<OrderBase>.Empty, options2, cancellationToken);
-        repository.LogRequest("b901c15d-782f-0fb6-4d48-de462a6f3381");
+        profiler.LogRequest("b901c15d-782f-0fb6-4d48-de462a6f3381");
 
         var options3 = new CountOptions { Comment = "bf3110fc-316d-83af-454c-785eb5bb9a49" };
         var total2 = await repository.Collection.CountDocumentsAsync(FilterDefinition<OrderBase>.Empty, options3, cancellationToken);
-        repository.LogRequest("bf3110fc-316d-83af-454c-785eb5bb9a49");
+        profiler.LogRequest("bf3110fc-316d-83af-454c-785eb5bb9a49");
         logger.LogInformation("After deleting: {Total}", total2);
     }
 

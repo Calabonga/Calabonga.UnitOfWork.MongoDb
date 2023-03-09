@@ -1,20 +1,27 @@
-/*
-/// <summary>
-    /// // Calabonga: update summary (2023-03-09 04:14 MongoDbProfiler)
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using System.Reflection;
+
+namespace Calabonga.UnitOfWork.MongoDb
+{
+    /// <summary>
+    /// Profiler for MongoDb
     /// </summary>
     public class MongoDbProfiler : IDisposable
     {
         private const string profileCollection = "system.profile";
         private const string profileMarker = "command.comment";
-        private IMongoDbContext? context;
-        private readonly ILog log;
+        private IRepository _repository;
+        private readonly ILogger _logger;
         private bool _isProfiling;
         private bool _disposed;
 
-        public MongoDbProfiler(IMongoDbContext context, ILog log)
+        public MongoDbProfiler(IRepository repository, ILogger logger)
         {
-            this.context = context;
-            this.log = log.ForContext<MongoDbProfiler>();
+            _repository = repository;
+            _logger = logger;
+
             SetProfiler(true);
         }
 
@@ -25,11 +32,14 @@
         {
             _isProfiling = isProfiling;
             var profileCommand = new BsonDocument("profile", isProfiling == _isProfiling ? 2 : 0);
-            var result = ((MongoDbContext)context!)?.Database?.RunCommand<BsonDocument>(profileCommand);
-            if (result?.GetValue("ok") != 1)
+            var result = _repository?.Database?.RunCommand<BsonDocument>(profileCommand);
+            if (result?.GetValue("ok") == 1)
             {
-                throw new DocsiFailedToEnableMongoDbProfilerException();
+                return;
             }
+
+            _logger.LogWarning($"Failed to enable profiler for MongoDb from {MethodBase.GetCurrentMethod()?.Name}");
+            _isProfiling = false;
         }
 
         /// <summary>
@@ -39,7 +49,12 @@
         /// <param name="requestId"></param>
         public void LogRequest(string requestId)
         {
-            var collection = context?.GetCollection<BsonDocument>(profileCollection, ReadPreference.Primary);
+            if (!_isProfiling)
+            {
+                return;
+            }
+
+            var collection = _repository.Database.GetCollection<BsonDocument>(profileCollection);
             var doc = collection.Find(new BsonDocument(profileMarker, requestId));
             if (doc == null)
             {
@@ -48,12 +63,13 @@
 
             var s = doc.FirstOrDefault();
             var command = s.GetValue("command").ToJson();
-            var db = s.GetValue("ns");
+            var ns = s.GetValue("ns");
             var total = s.GetValue("millis");
             s.TryGetValue("planSummary", out var plan);
             var type = s.GetValue("op");
             var length = s.GetValue("responseLength");
-            log.Warn($"[{db}] {command}, plan:{plan}, type: {type}, length: {length}, duration: {total}ms");
+            _logger.LogInformation("[{Namespace}] {Command}, plan: {Plan}, type: {Type}, length: {Length}bytes, duration: {Total}ms",
+                ns, command, plan ?? "N/A", type, length, total);
         }
 
         /// <summary>
@@ -64,6 +80,7 @@
         {
             // Dispose of unmanaged resources.
             Dispose(true);
+
             // Suppress finalization.
             GC.SuppressFinalize(this);
         }
@@ -78,10 +95,10 @@
             if (disposing)
             {
                 SetProfiler(false);
-                context = null;
+                _repository = null;
             }
 
             _disposed = true;
         }
     }
-*/
+}
